@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        body {
+            background-color: #0078D7;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .emoji {
+            font-size: 120px;
+            margin-bottom: 30px;
+            animation: subtleShake 5s infinite;
+        }
+        
+        @keyframes subtleShake {
+            0%, 90%, 100% { transform: translateX(0); }
+            92% { transform: translateX(-2px); }
+            94% { transform: translateX(2px); }
+            96% { transform: translateX(-2px); }
+            98% { transform: translateX(2px); }
+        }
+        
+        .error-title {
+            font-size: 28px;
+            line-height: 1.4;
+            margin-bottom: 30px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 40px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background-color: #0050A0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #5BC0DE;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .error-codes {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            min-height: 120px;
+            line-height: 1.5;
+        }
+        
+        .support-info {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+        
+        .qr-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000 100%),
+                        linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000 100%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            margin-right: 20px;
+            border: 2px solid white;
+        }
+        
+        .restart-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .restart-logo {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .restart-text {
+            font-size: 24px;
+            text-align: center;
+        }
+        
+        .restart-progress {
+            width: 300px;
+            height: 10px;
+            background-color: #333;
+            margin-top: 30px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .restart-progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #0078D7;
+            transition: width 0.5s ease;
+        }
+        
+        .memory-dump {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #000;
+            color: #0F0;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 40px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .memory-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: memoryScroll 15s linear infinite;
+        }
+        
+        @keyframes memoryScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Disable text selection */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Disable context menu */
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .emoji {
+                font-size: 80px;
+            }
+            
+            .error-title {
+                font-size: 22px;
+            }
+            
+            .error-codes {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Blue Screen -->
+    <div class="container" id="mainScreen">
+        <div class="emoji">:(</div>
+        
+        <div class="error-title" id="errorTitle">
+            Your PC ran into a problem and needs to restart.<br>
+            We're just collecting some error info, and then we'll restart for you.
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-text" id="progressText">0% complete</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div class="error-codes" id="errorCodes"></div>
+        
+        <div class="support-info">
+            For more information about this issue and possible fixes, visit:<br>
+            https://www.windows.com/stopcode<br><br>
+            If you call a support person, give them this info:<br>
+            Stop code: SYSTEM_THREAD_EXCEPTION_NOT_HANDLED<br>
+            What failed: win32kbase.sys
+        </div>
+        
+        <div class="qr-container">
+            <div class="qr-code"></div>
+            <div>
+                Scan this QR code with your phone to visit our support page<br>
+                for more information about this error.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Restart Screen -->
+    <div class="restart-screen" id="restartScreen">
+        <div class="restart-logo">⚙️</div>
+        <div class="restart-text" id="restartText">Please wait while we restart your PC</div>
+        <div class="restart-progress">
+            <div class="restart-progress-fill" id="restartProgressFill"></div>
+        </div>
+    </div>
+    
+    <!-- Memory Dump -->
+    <div class="memory-dump">
+        <div class="memory-text" id="memoryText"></div>
+    </div>
+
+    <script>
+        // Error code templates
+        const errorTemplates = [
+            "0x{code}",
+            "CRITICAL_PROCESS_DIED",
+            "IRQL_NOT_LESS_OR_EQUAL",
+            "PAGE_FAULT_IN_NONPAGED_AREA",
+            "SYSTEM_SERVICE_EXCEPTION",
+            "VIDEO_TDR_FAILURE",
+            "DPC_WATCHDOG_VIOLATION",
+            "KERNEL_SECURITY_CHECK_FAILURE",
+            "UNEXPECTED_STORE_EXCEPTION",
+            "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+            "MEMORY_MANAGEMENT",
+            "PFN_LIST_CORRUPT",
+            "VIDEO_DXGKRNL_FATAL_ERROR",
+            "VIDEO_SCHEDULER_INTERNAL_ERROR"
+        ];
+        
+        // Displayed errors
+        let displayedErrors = [];
+        let progress = 0;
+        let isRunning = true;
+        let isRestarting = false;
+        let cycleCount = 0;
+        
+        // Memory dump text
+        const memoryHex = "0123456789ABCDEF";
+        let memoryText = "";
+        for (let i = 0; i < 500; i++) {
+            memoryText += memoryHex[Math.floor(Math.random() * 16)];
+            if ((i + 1) % 4 === 0) memoryText += " ";
+            if ((i + 1) % 32 === 0) memoryText += "  ";
+            if ((i + 1) % 128 === 0) memoryText += "\n";
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set memory dump text
+            document.getElementById('memoryText').textContent = memoryText;
+            
+            // Prevent context menu
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Intercept keyboard events
+            document.addEventListener('keydown', function(e) {
+                // Prevent common exit shortcuts
+                if (e.key === 'F12' || e.key === 'F5' || 
+                    (e.ctrlKey && (e.key === 'r' || e.key === 'R')) ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'j' || e.key === 'J')) ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'c' || e.key === 'C')) ||
+                    e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Show "not responding" message
+                    if (!isRestarting) {
+                        const originalText = document.getElementById('errorTitle').innerHTML;
+                        document.getElementById('errorTitle').innerHTML = 
+                            "System not responding. Attempting to recover...<br>" +
+                            "If this persists, you may need to contact your system administrator.";
+                        
+                        setTimeout(() => {
+                            document.getElementById('errorTitle').innerHTML = originalText;
+                        }, 3000);
+                    }
+                    
+                    return false;
+                }
+                
+                // Special secret exit combination (hard to discover)
+                if (e.ctrlKey && e.altKey && e.shiftKey && e.key === 'X') {
+                    if (confirm("Exit blue screen simulation?")) {
+                        window.close();
+                    }
+                }
+            }, true);
+            
+            // Prevent text selection
+            document.addEventListener('selectstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Prevent drag
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Start simulation
+            startProgress();
+            startErrorGeneration();
+            
+            // Start the infinite cycle
+            setTimeout(startRestartCycle, 30000);
+        });
+        
+        // Start progress bar animation
+        function startProgress() {
+            const progressInterval = setInterval(() => {
+                if (!isRunning) {
+                    clearInterval(progressInterval);
+                    return;
+                }
+                
+                // Random progress increment
+                const increment = Math.floor(Math.random() * 3) + 1;
+                progress = Math.min(100, progress + increment);
+                
+                // Update progress bar
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('progressText').textContent = `${progress}% complete`;
+                
+                // If progress reaches 100%, start restart process
+                if (progress >= 100 && !isRestarting) {
+                    startRestartSequence();
+                }
+            }, 300);
+        }
+        
+        // Generate error codes
+        function startErrorGeneration() {
+            const errorCodesElement = document.getElementById('errorCodes');
+            
+            setInterval(() => {
+                if (!isRunning) return;
+                
+                // Randomly select error template
+                const template = errorTemplates[Math.floor(Math.random() * errorTemplates.length)];
+                let errorCode;
+                
+                if (template.includes('{code}')) {
+                    // Generate hex error code
+                    const hexCode = Math.floor(Math.random() * 0xFFFFFFFF).toString(16).toUpperCase();
+                    errorCode = template.replace('{code}', hexCode.padStart(8, '0'));
+                } else {
+                    errorCode = template;
+                }
+                
+                // Add to error list
+                displayedErrors.push(errorCode);
+                
+                // Keep list length limited
+                if (displayedErrors.length > 4) {
+                    displayedErrors.shift();
+                }
+                
+                // Update display
+                errorCodesElement.textContent = displayedErrors.join('\n');
+            }, 2000);
+            
+            // Initial errors
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const template = errorTemplates[Math.floor(Math.random() * errorTemplates.length)];
+                    let errorCode;
+                    
+                    if (template.includes('{code}')) {
+                        const hexCode = Math.floor(Math.random() * 0xFFFFFFFF).toString(16).toUpperCase();
+                        errorCode = template.replace('{code}', hexCode.padStart(8, '0'));
+                    } else {
+                        errorCode = template;
+                    }
+                    
+                    displayedErrors.push(errorCode);
+                    if (displayedErrors.length > 4) displayedErrors.shift();
+                    errorCodesElement.textContent = displayedErrors.join('\n');
+                }, i * 800);
+            }
+        }
+        
+        // Start restart sequence
+        function startRestartSequence() {
+            isRestarting = true;
+            
+            // Show restart screen
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('restartScreen').style.display = 'flex';
+            
+            // Update restart text based on cycle count
+            const restartMessages = [
+                "Please wait while we restart your PC",
+                "Installing Windows updates",
+                "Configuring Windows features",
+                "Working on updates",
+                "Finishing up",
+                "Do not turn off your PC"
+            ];
+            
+            const messageIndex = cycleCount % restartMessages.length;
+            document.getElementById('restartText').textContent = restartMessages[messageIndex];
+            
+            // Animate restart progress
+            let restartProgress = 0;
+            const restartInterval = setInterval(() => {
+                restartProgress += Math.floor(Math.random() * 5) + 1;
+                if (restartProgress > 100) restartProgress = 100;
+                
+                document.getElementById('restartProgressFill').style.width = `${restartProgress}%`;
+                
+                if (restartProgress >= 100) {
+                    clearInterval(restartInterval);
+                    
+                    // Wait a moment then return to blue screen
+                    setTimeout(() => {
+                        document.getElementById('mainScreen').style.display = 'flex';
+                        document.getElementById('restartScreen').style.display = 'none';
+                        
+                        // Reset progress and errors
+                        progress = 0;
+                        document.getElementById('progressFill').style.width = '0%';
+                        document.getElementById('progressText').textContent = '0% complete';
+                        
+                        // Clear errors
+                        displayedErrors = [];
+                        document.getElementById('errorCodes').textContent = '';
+                        
+                        // Update cycle count and error message
+                        cycleCount++;
+                        if (cycleCount % 3 === 0) {
+                            document.getElementById('errorTitle').innerHTML = 
+                                "Windows has encountered a critical error.<br>" +
+                                "The system is attempting recovery operations.";
+                        } else if (cycleCount % 5 === 0) {
+                            document.getElementById('errorTitle').innerHTML = 
+                                "A problem has been detected and Windows has been shut down.<br>" +
+                                "This might be caused by a hardware or driver issue.";
+                        } else {
+                            document.getElementById('errorTitle').innerHTML = 
+                                "Your PC ran into a problem and needs to restart.<br>" +
+                                "We're just collecting some error info, and then we'll restart for you.";
+                        }
+                        
+                        isRestarting = false;
+                        
+                        // Schedule next restart
+                        setTimeout(startRestartCycle, 25000 + Math.random() * 15000);
+                        
+                    }, 1500);
+                }
+            }, 200);
+        }
+        
+        // Start the infinite restart cycle
+        function startRestartCycle() {
+            if (!isRestarting) {
+                progress = 95; // Force completion soon
+            }
+        }
+        
+        // Make the memory dump text update periodically
+        setInterval(() => {
+            // Occasionally update memory dump text
+            if (Math.random() < 0.1) {
+                let newMemoryText = "";
+                for (let i = 0; i < 500; i++) {
+                    newMemoryText += memoryHex[Math.floor(Math.random() * 16)];
+                    if ((i + 1) % 4 === 0) newMemoryText += " ";
+                    if ((i + 1) % 32 === 0) newMemoryText += "  ";
+                    if ((i + 1) % 128 === 0) newMemoryText += "\n";
+                }
+                document.getElementById('memoryText').textContent = newMemoryText;
+            }
+        }, 5000);
+        
+        // Make the page difficult to close
+        window.onbeforeunload = function(e) {
+            if (isRunning) {
+                e = e || window.event;
+                
+                // For modern browsers
+                if (e) {
+                    e.returnValue = 'The system is currently processing critical operations. Are you sure you want to leave?';
+                }
+                
+                // For older browsers
+                return 'The system is currently processing critical operations. Are you sure you want to leave?';
+            }
+        };
+        
+        // Make it difficult to right-click or inspect
+        document.addEventListener('mousedown', function(e) {
+            // Middle click or right click
+            if (e.button === 1 || e.button === 2) {
+                e.preventDefault();
+                
+                // Show "not responding" message
+                if (!isRestarting) {
+                    const originalText = document.getElementById('errorTitle').innerHTML;
+                    document.getElementById('errorTitle').innerHTML = 
+                        "Input device not recognized. Checking drivers...<br>" +
+                        "System may become unresponsive during this process.";
+                    
+                    setTimeout(() => {
+                        document.getElementById('errorTitle').innerHTML = originalText;
+                    }, 3000);
+                }
+                
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
