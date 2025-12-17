@@ -45,10 +45,10 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 当前日期显示栏 */
+        /* 当前日期显示栏 - 修改为始终可见 */
         .current-date-bar {
             position: sticky;
-            top: 0;
+            top: 73px; /* 位于header下方 */
             z-index: 900;
             background: linear-gradient(135deg, var(--primary-color), #b71c1c);
             color: white;
@@ -57,13 +57,10 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
-            margin-top: -1px; /* 与header重叠1px避免间隙 */
-        }
-
-        .current-date-bar.visible {
+            /* 移除隐藏相关样式 */
             transform: translateY(0);
+            transition: none;
+            margin-top: 0;
         }
 
         .date-bar-left {
@@ -97,22 +94,37 @@
             gap: 12px;
         }
 
-        .date-bar-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+        /* 移除日期栏关闭按钮样式 */
+
+        /* 时间线日期标题 */
+        .timeline-date-title {
+            background-color: rgba(148, 13, 20, 0.1);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            margin: 20px 0 10px;
+            border-radius: var(--small-radius);
+            font-weight: 600;
+            font-size: 16px;
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
+            gap: 10px;
         }
 
-        .date-bar-close:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .timeline-date-title::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+
+        .timeline-date-title i {
+            font-size: 14px;
         }
 
         /* 模态框 */
@@ -1387,6 +1399,7 @@
             .current-date-bar {
                 padding: 10px 16px;
                 font-size: 14px;
+                top: 65px; /* 移动端header较矮 */
             }
             
             .current-date-display {
@@ -1461,7 +1474,7 @@
     </style>
 </head>
 <body>
-    <!-- 当前日期显示栏 -->
+    <!-- 当前日期显示栏 - 修改为始终可见，无关闭按钮 -->
     <div class="current-date-bar" id="currentDateBar">
         <div class="date-bar-left">
             <span class="date-bar-title">当前查看：</span>
@@ -1472,9 +1485,7 @@
                 <span>树洞: <span id="dateBarPostCount">0</span></span>
                 <span>评论: <span id="dateBarCommentCount">0</span></span>
             </div>
-            <button class="date-bar-close" id="hideDateBarBtn" title="隐藏日期栏">
-                <i class="fas fa-chevron-up"></i>
-            </button>
+            <!-- 移除关闭按钮 -->
         </div>
     </div>
 
@@ -1536,7 +1547,7 @@
                                 <i class="fas fa-history"></i>
                             </div>
                             <div class="feature-text">
-                                <div class="feature-title">历史时间线</div>
+                                <div class="feature-title">浏览时间线</div>
                                 <div class="feature-desc">记录您的浏览历史，快速跳转</div>
                             </div>
                         </div>
@@ -1615,13 +1626,13 @@
         </div>
     </div>
 
-    <!-- 历史时间线模态框 -->
+    <!-- 浏览时间线模态框 - 修改标题 -->
     <div class="modal" id="historyModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">
                     <i class="fas fa-history"></i>
-                    历史时间线
+                    浏览时间线
                 </div>
                 <button class="modal-close" id="closeHistoryBtn">
                     <i class="fas fa-times"></i>
@@ -1630,11 +1641,11 @@
             <div class="modal-body">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
-                        <h3 style="margin: 0;">您的浏览历史</h3>
+                        <h3 style="margin: 0;">您的浏览记录</h3>
                         <p style="color: var(--text-tertiary); font-size: 14px; margin-top: 4px;">点击记录可快速跳转</p>
                     </div>
                     <button id="clearHistoryBtn" style="padding: 8px 16px; background-color: var(--bg-tertiary); color: var(--text-secondary); border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-trash"></i> 清除历史
+                        <i class="fas fa-trash"></i> 清除记录
                     </button>
                 </div>
                 
@@ -1662,7 +1673,7 @@
             </button>
             <button class="header-btn" id="historyBtn">
                 <i class="fas fa-history"></i>
-                <span>历史时间线</span>
+                <span>浏览时间线</span>
             </button>
             <div class="toggle-group">
                 <span class="toggle-label">展示缺失帖子</span>
@@ -1723,7 +1734,7 @@
             
             <!-- 控制面板 -->
             <div class="control-panel" style="margin-top: 20px;">
-                <!-- 排序控制 -->
+                <!-- 排序控制 - 删除智能推荐选项 -->
                 <div class="control-group">
                     <span class="control-label">排序方式：</span>
                     <select id="sortSelect" class="sort-select">
@@ -1732,8 +1743,15 @@
                         <option value="time_asc">按时间正序</option>
                         <option value="comments">按评论数排序</option>
                         <option value="watches">按围观数排序</option>
-                        <option value="recommend">智能推荐</option>
+                        <!-- 移除智能推荐选项 -->
                     </select>
+                </div>
+                
+                <!-- 推荐算法开关 -->
+                <div class="control-group">
+                    <span class="control-label">推荐算法：</span>
+                    <button class="toggle-switch" id="toggleRecommendBtn"></button>
+                    <span class="control-label" style="font-size: 12px; color: var(--text-tertiary);">开启后会在热度/时间排序中加入推荐微调</span>
                 </div>
                 
                 <!-- 布局控制（移动端隐藏分屏选项） -->
@@ -1843,12 +1861,12 @@
         let userPreferenceVector = null; // 用户偏好向量（用于算法推荐）
         let isMobile = false; // 是否移动设备
         let dateBarVisible = true; // 日期栏是否可见
+        let enableRecommendation = false; // 推荐算法开关，默认关闭
 
         // 缓存和历史记录相关
         const CACHE_PREFIX = 'pku_hole_cache_';
         const HISTORY_KEY = 'pku_hole_history';
         const USER_PREFERENCE_KEY = 'pku_hole_user_preference';
-        const DATE_BAR_VISIBLE_KEY = 'pku_hole_date_bar_visible';
         const CACHE_EXPIRY_DAYS = 30; // 缓存过期天数
         const MAX_HISTORY_ITEMS = 200; // 最大历史记录数
         const RECOMMEND_WEIGHT = 0.15; // 推荐算法权重（15%）
@@ -1858,7 +1876,6 @@
         const currentDateDisplay = document.getElementById('currentDateDisplay');
         const dateBarPostCount = document.getElementById('dateBarPostCount');
         const dateBarCommentCount = document.getElementById('dateBarCommentCount');
-        const hideDateBarBtn = document.getElementById('hideDateBarBtn');
         const dateInput = document.getElementById('dateInput');
         const loadBtn = document.getElementById('loadBtn');
         const modeToggle = document.getElementById('modeToggle');
@@ -1875,6 +1892,7 @@
         const nextDayBtn = document.getElementById('nextDayBtn');
         const toggleMissedBtn = document.getElementById('toggleMissedBtn');
         const toggleDeletedBtn = document.getElementById('toggleDeletedBtn');
+        const toggleRecommendBtn = document.getElementById('toggleRecommendBtn'); // 新增
         const sortSelect = document.getElementById('sortSelect');
         const layoutSelect = document.getElementById('layoutSelect');
         const interactionSelect = document.getElementById('interactionSelect');
@@ -1925,27 +1943,6 @@
             currentDateDisplay.textContent = displayDate;
             dateBarPostCount.textContent = postCount;
             dateBarCommentCount.textContent = commentCount;
-            
-            if (dateBarVisible) {
-                currentDateBar.classList.add('visible');
-            }
-        }
-
-        // 切换日期栏显示
-        function toggleDateBar() {
-            dateBarVisible = !dateBarVisible;
-            if (dateBarVisible) {
-                currentDateBar.classList.add('visible');
-            } else {
-                currentDateBar.classList.remove('visible');
-            }
-            
-            // 保存偏好
-            try {
-                localStorage.setItem(DATE_BAR_VISIBLE_KEY, JSON.stringify(dateBarVisible));
-            } catch (e) {
-                console.error('保存日期栏显示状态时出错:', e);
-            }
         }
 
         // 初始化缓存和统计
@@ -1953,22 +1950,6 @@
             updateCacheStats();
             updateHistoryStats();
             loadUserPreference();
-            loadDateBarPreference();
-        }
-
-        // 加载日期栏显示偏好
-        function loadDateBarPreference() {
-            try {
-                const saved = localStorage.getItem(DATE_BAR_VISIBLE_KEY);
-                if (saved !== null) {
-                    dateBarVisible = JSON.parse(saved);
-                    if (dateBarVisible) {
-                        currentDateBar.classList.add('visible');
-                    }
-                }
-            } catch (e) {
-                console.error('加载日期栏显示状态时出错:', e);
-            }
         }
 
         // 加载用户偏好向量
@@ -1999,7 +1980,7 @@
 
         // 更新用户偏好向量（基于点击的帖子）- 工业级TF-IDF简化版
         function updateUserPreference(postContent) {
-            if (!postContent || postContent === '#MISSED') return;
+            if (!postContent || postContent === '#MISSED' || !enableRecommendation) return;
             
             // 1. 中文分词（简化版：按字符分割，过滤停用词）
             const stopWords = new Set(['的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这']);
@@ -2072,7 +2053,7 @@
 
         // 计算帖子与用户偏好的相似度（改进版余弦相似度）
         function calculateSimilarity(postContent) {
-            if (!userPreferenceVector || Object.keys(userPreferenceVector).length === 0) {
+            if (!userPreferenceVector || Object.keys(userPreferenceVector).length === 0 || !enableRecommendation) {
                 return 0;
             }
             
@@ -2147,79 +2128,128 @@
 
         // 推荐算法：混合排序（基于当前排序方式，加入推荐权重）
         function applyRecommendationAlgorithm(posts, baseSortMethod) {
-            if (baseSortMethod === 'recommend') {
-                // 如果是推荐模式，完全按相似度排序
-                return posts.map(post => {
-                    if (!post.isMissed && !post.isDeleted) {
-                        post.similarity = calculateSimilarity(post.content);
-                    } else {
-                        post.similarity = 0;
-                    }
-                    return post;
-                }).sort((a, b) => {
-                    // 缺失和被删除的帖子放最后
-                    if (a.isMissed && !b.isMissed) return 1;
-                    if (!a.isMissed && b.isMissed) return -1;
-                    if (a.isDeleted && !b.isDeleted) return 1;
-                    if (!a.isDeleted && b.isDeleted) return -1;
-                    
-                    return b.similarity - a.similarity;
-                });
-            } else {
-                // 混合排序：基于当前排序，加入推荐权重
-                const postsWithScore = posts.map(post => {
-                    // 计算基础分数
-                    let baseScore = 0;
-                    
-                    switch(baseSortMethod) {
-                        case 'hotness':
-                            baseScore = parseFloat(post.hotness) || 0;
-                            break;
-                        case 'time_desc':
-                            baseScore = post.id; // 时间倒序：ID越大分数越高
-                            break;
-                        case 'time_asc':
-                            baseScore = -post.id; // 时间正序：ID越小分数越高
-                            break;
-                        case 'comments':
-                            baseScore = post.comments.length;
-                            break;
-                        case 'watches':
-                            baseScore = Math.abs(post.watches) || 0;
-                            break;
-                        default:
-                            baseScore = parseFloat(post.hotness) || 0;
-                    }
-                    
-                    // 计算推荐分数
-                    let recommendScore = 0;
-                    if (!post.isMissed && !post.isDeleted) {
-                        recommendScore = calculateSimilarity(post.content);
-                        post.similarity = recommendScore;
-                    }
-                    
-                    // 混合分数：baseScore * (1 - weight) + recommendScore * weight
-                    const totalScore = baseScore * (1 - RECOMMEND_WEIGHT) + recommendScore * RECOMMEND_WEIGHT * 100;
-                    
-                    return {
-                        ...post,
-                        _sortScore: totalScore,
-                        _baseScore: baseScore,
-                        _recommendScore: recommendScore
-                    };
-                });
-                
-                // 按总分数排序
-                return postsWithScore.sort((a, b) => {
-                    // 缺失和被删除的帖子放最后
-                    if (a.isMissed && !b.isMissed) return 1;
-                    if (!a.isMissed && b.isMissed) return -1;
-                    if (a.isDeleted && !b.isDeleted) return 1;
-                    if (!a.isDeleted && b.isDeleted) return -1;
-                    
-                    return b._sortScore - a._sortScore;
-                }).map(({_sortScore, _baseScore, _recommendScore, ...post}) => post);
+            // 如果推荐功能关闭，直接返回原始排序
+            if (!enableRecommendation) {
+                return sortPosts(posts, baseSortMethod);
             }
+            
+            // 混合排序：基于当前排序，加入推荐权重
+            const postsWithScore = posts.map(post => {
+                // 计算基础分数
+                let baseScore = 0;
+                
+                switch(baseSortMethod) {
+                    case 'hotness':
+                        baseScore = parseFloat(post.hotness) || 0;
+                        break;
+                    case 'time_desc':
+                        baseScore = post.id; // 时间倒序：ID越大分数越高
+                        break;
+                    case 'time_asc':
+                        baseScore = -post.id; // 时间正序：ID越小分数越高
+                        break;
+                    case 'comments':
+                        baseScore = post.comments.length;
+                        break;
+                    case 'watches':
+                        baseScore = Math.abs(post.watches) || 0;
+                        break;
+                    default:
+                        baseScore = parseFloat(post.hotness) || 0;
+                }
+                
+                // 计算推荐分数
+                let recommendScore = 0;
+                if (!post.isMissed && !post.isDeleted) {
+                    recommendScore = calculateSimilarity(post.content);
+                    post.similarity = recommendScore;
+                }
+                
+                // 混合分数：baseScore * (1 - weight) + recommendScore * weight
+                const totalScore = baseScore * (1 - RECOMMEND_WEIGHT) + recommendScore * RECOMMEND_WEIGHT * 100;
+                
+                return {
+                    ...post,
+                    _sortScore: totalScore,
+                    _baseScore: baseScore,
+                    _recommendScore: recommendScore
+                };
+            });
+            
+            // 按总分数排序
+            return postsWithScore.sort((a, b) => {
+                // 缺失和被删除的帖子放最后
+                if (a.isMissed && !b.isMissed) return 1;
+                if (!a.isMissed && b.isMissed) return -1;
+                if (a.isDeleted && !b.isDeleted) return 1;
+                if (!a.isDeleted && b.isDeleted) return -1;
+                
+                return b._sortScore - a._sortScore;
+            }).map(({_sortScore, _baseScore, _recommendScore, ...post}) => post);
+        }
+
+        // 基础排序函数（不包含推荐算法）
+        function sortPosts(posts, sortMethod) {
+            const sortedPosts = [...posts];
+            
+            switch(sortMethod) {
+                case 'hotness':
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return parseFloat(b.hotness) - parseFloat(a.hotness);
+                    });
+                    break;
+                case 'time_desc':
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return b.id - a.id;
+                    });
+                    break;
+                case 'time_asc':
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return a.id - b.id;
+                    });
+                    break;
+                case 'comments':
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return b.comments.length - a.comments.length;
+                    });
+                    break;
+                case 'watches':
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return Math.abs(b.watches) - Math.abs(a.watches);
+                    });
+                    break;
+                default:
+                    // 默认按热度排序
+                    sortedPosts.sort((a, b) => {
+                        if (a.isMissed && !b.isMissed) return 1;
+                        if (!a.isMissed && b.isMissed) return -1;
+                        if (a.isDeleted && !b.isDeleted) return 1;
+                        if (!a.isDeleted && b.isDeleted) return -1;
+                        return parseFloat(b.hotness) - parseFloat(a.hotness);
+                    });
+            }
+            
+            return sortedPosts;
         }
 
         // 更新缓存统计
@@ -2364,13 +2394,13 @@
         }
 
         function clearHistory() {
-            if (confirm('确定要清除所有历史记录吗？同时会清除用户推荐偏好。')) {
+            if (confirm('确定要清除所有浏览记录吗？同时会清除用户推荐偏好。')) {
                 localStorage.removeItem(HISTORY_KEY);
                 localStorage.removeItem(USER_PREFERENCE_KEY);
                 userPreferenceVector = {};
                 updateHistoryStats();
                 renderTimeline();
-                alert('历史记录和用户偏好已清除');
+                alert('浏览记录和用户偏好已清除');
             }
         }
 
@@ -2382,7 +2412,7 @@
                 timelineContainer.innerHTML = `
                     <div class="timeline-empty">
                         <i class="fas fa-history"></i>
-                        <div>暂无历史记录</div>
+                        <div>暂无浏览记录</div>
                         <p style="margin-top: 8px; font-size: 14px;">开始浏览树洞档案，这里会记录您的活动</p>
                     </div>
                 `;
@@ -2393,8 +2423,21 @@
             const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
             
             let html = '';
+            let lastDate = null;
             
             sortedHistory.forEach((item, index) => {
+                // 检查是否需要添加日期标题
+                const itemDate = new Date(item.timestamp).toLocaleDateString('zh-CN');
+                if (lastDate !== itemDate) {
+                    html += `
+                        <div class="timeline-date-title">
+                            <i class="fas fa-calendar-day"></i>
+                            ${itemDate}
+                        </div>
+                    `;
+                    lastDate = itemDate;
+                }
+                
                 if (item.type === 'date_view') {
                     html += `
                         <div class="timeline-item" data-date="${item.data.date}" onclick="jumpToDate('${item.data.date}')">
@@ -2599,8 +2642,13 @@
                 date = firstPostTime.substring(0, 10);
             }
             
-            // 应用推荐算法
-            const sortedPosts = applyRecommendationAlgorithm(posts, currentSortMethod);
+            // 应用推荐算法（如果开启）
+            let sortedPosts;
+            if (enableRecommendation) {
+                sortedPosts = applyRecommendationAlgorithm(posts, currentSortMethod);
+            } else {
+                sortedPosts = sortPosts(posts, currentSortMethod);
+            }
             
             return {
                 date: date,
@@ -3094,8 +3142,8 @@
                         html += `<span class="hotness-tag ${hotnessColorClass}"><i class="fas fa-fire"></i> ${post.hotness}</span>`;
                     }
                     
-                    // 推荐标签（相似度高的帖子）
-                    if (post.similarity > 0.3) {
+                    // 推荐标签（相似度高的帖子）- 只在推荐功能开启时显示
+                    if (enableRecommendation && post.similarity > 0.3) {
                         html += `<span class="recommend-tag"><i class="fas fa-star"></i> 推荐</span>`;
                     }
                     
@@ -3394,8 +3442,12 @@
         // 重新排序并渲染内容
         function reSortAndRender() {
             if (currentData.posts.length > 0) {
-                // 应用推荐算法重新排序
-                currentData.posts = applyRecommendationAlgorithm(currentData.posts, currentSortMethod);
+                // 应用排序（包含推荐算法如果开启）
+                if (enableRecommendation) {
+                    currentData.posts = applyRecommendationAlgorithm(currentData.posts, currentSortMethod);
+                } else {
+                    currentData.posts = sortPosts(currentData.posts, currentSortMethod);
+                }
                 renderHoleContent(currentData);
                 
                 // 重新设置已删除帖子的显示状态
@@ -3439,6 +3491,17 @@
                 showDeletedPosts = !showDeletedPosts;
                 toggleDeletedBtn.classList.toggle('active');
                 updatePostVisibility();
+            });
+            
+            // 推荐算法开关
+            toggleRecommendBtn.addEventListener('click', () => {
+                enableRecommendation = !enableRecommendation;
+                toggleRecommendBtn.classList.toggle('active');
+                
+                // 重新排序并渲染
+                if (currentData.posts.length > 0) {
+                    reSortAndRender();
+                }
             });
             
             // 排序选择器事件监听
@@ -3532,9 +3595,6 @@
             
             // 清除缓存按钮事件
             clearCacheBtn.addEventListener('click', clearAllCache);
-            
-            // 日期栏隐藏按钮事件
-            hideDateBarBtn.addEventListener('click', toggleDateBar);
             
             // 点击模态框背景关闭
             window.addEventListener('click', (e) => {
@@ -3678,6 +3738,7 @@
             // 初始化开关状态
             toggleMissedBtn.classList.toggle('active', showMissedPosts);
             toggleDeletedBtn.classList.toggle('active', showDeletedPosts);
+            toggleRecommendBtn.classList.toggle('active', enableRecommendation);
             
             // 初始化缓存和统计
             initCacheAndStats();
