@@ -1,0 +1,3764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北京大学树洞档案馆</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* 北大红标准色号 */
+            --primary-color:  #940D14; 
+            --secondary-color: #940D14;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --bg-tertiary: #f2f2f2;
+            --text-primary: #111111;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border-color: #e8e8e8;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --card-radius: 16px;
+            --small-radius: 8px;
+            --modal-bg: rgba(0, 0, 0, 0.5);
+            
+            /* 热度颜色 */
+            --hotness-purple: #8A2BE2; /* 前1% - 紫色 */
+            --hotness-red: #FF6B6B; /* 1%-5% - 红色 */
+            --hotness-orange: #FF8E53; /* 5%-20% - 橙色 */
+            --hotness-gray: #999999; /* 20%-99% - 灰色 */
+            --hotness-green: #4CAF50; /* 热度1.0 - 绿色 */
+            --recommend-blue: #4A90E2; /* 推荐标签蓝色 */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 当前日期显示栏 */
+        .current-date-bar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: linear-gradient(135deg, var(--primary-color), #b71c1c);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            margin-top: -1px; /* 与header重叠1px避免间隙 */
+        }
+
+        .current-date-bar.visible {
+            transform: translateY(0);
+        }
+
+        .date-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-bar-title {
+            font-weight: 600;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .current-date-display {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .date-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .date-bar-stats {
+            font-size: 12px;
+            opacity: 0.8;
+            display: flex;
+            gap: 12px;
+        }
+
+        .date-bar-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .date-bar-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-primary);
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 20px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-section {
+            margin-bottom: 24px;
+        }
+
+        .modal-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-section h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px 0 8px;
+            color: var(--text-secondary);
+        }
+
+        .modal-section p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .modal-section ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .modal-section li {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            background-color: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--small-radius);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(148, 13, 20, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .feature-desc {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .shortcut-item {
+            background-color: var(--bg-secondary);
+            padding: 12px;
+            border-radius: var(--small-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shortcut-action {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .shortcut-key {
+            background-color: var(--bg-primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: var(--small-radius);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--primary-color);
+        }
+
+        .header-btn i {
+            font-size: 14px;
+        }
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background-color: var(--border-color);
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.active {
+            background-color: var(--primary-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-tertiary);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* 主要内容区域 */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 现代日期选择器样式 */
+        .date-selector-container {
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .date-selector-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-selector-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .mode-indicator {
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-toggle {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .date-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .date-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(148, 13, 20, 0.1);
+        }
+
+        .date-input-label {
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            background-color: var(--bg-primary);
+            padding: 0 4px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .date-button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .date-button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .date-button.primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .date-button.secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .date-button.secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .date-button.small {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .date-info {
+            background-color: rgba(148, 13, 20, 0.05);
+            border-left: 3px solid var(--primary-color);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-range {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .sort-select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 140px;
+        }
+
+        .sort-select:hover {
+            border-color: var(--primary-color);
+        }
+
+        .sort-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(148, 13, 20, 0.1);
+        }
+
+        /* 文件信息 */
+        .file-info {
+            margin-top: 20px;
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--small-radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .file-stats {
+            display: flex;
+            gap: 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* 分屏布局 */
+        .split-layout {
+            display: flex;
+            gap: 24px;
+            min-height: 600px;
+        }
+
+        /* 帖子容器 */
+        .posts-container {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .posts-container.full-width {
+            max-width: 100%;
+            flex: 1 1 100%;
+        }
+
+        /* 帖子列表检测区 */
+        .posts-scroll-area {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            cursor: default;
+            z-index: 1;
+        }
+
+        /* 右侧面板 */
+        .right-panel {
+            flex: 1;
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 120px; /* 适应日期栏高度 */
+            max-height: calc(100vh - 170px);
+        }
+
+        .right-panel.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .right-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .right-panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .right-panel-close {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .right-panel-close:hover {
+            color: var(--primary-color);
+        }
+
+        .right-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .empty-panel {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-panel-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--border-color);
+        }
+
+        .empty-panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* 右侧面板中的帖子详情 */
+        .post-detail-card {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .post-detail-content {
+            font-size: 16px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 16px;
+        }
+
+        .post-detail-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-tertiary);
+            font-size: 14px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .post-detail-id {
+            background-color: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* 树洞卡片 */
+        .hole-card {
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .hole-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .hole-card.clickable {
+            cursor: pointer;
+        }
+
+        .hole-card.active {
+            border-left: 4px solid var(--primary-color);
+            background-color: rgba(148, 13, 20, 0.03);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .post-time {
+            color: var(--text-tertiary);
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .post-id {
+            background-color: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .post-content-inline {
+            flex: 1;
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .post-votes {
+            flex-shrink: 0;
+        }
+
+        .post-time-info {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .post-votes {
+            margin-left: auto;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .card-content {
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 24px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* 热度标签 - 根据热度级别使用不同颜色 */
+        .hotness-tag {
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hotness-tag.purple {
+            background: linear-gradient(135deg, #8A2BE2, #9B30FF);
+        }
+
+        .hotness-tag.red {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+        }
+
+        .hotness-tag.orange {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+        }
+
+        .hotness-tag.gray {
+            background: linear-gradient(135deg, #999999, #B0B0B0);
+        }
+
+        .hotness-tag.green {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+        }
+
+        /* 推荐标签 */
+        .recommend-tag {
+            background: linear-gradient(135deg, var(--recommend-blue), #357ABD);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .recommend-tag i {
+            font-size: 10px;
+        }
+
+        .hotness-tag i, .recommend-tag i {
+            font-size: 10px;
+        }
+
+        /* 删除标记 */
+        .deleted-badge {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 8px;
+        }
+
+        .deleted-badge i {
+            font-size: 10px;
+        }
+
+        /* 缓存指示器 */
+        .cache-indicator {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .cache-indicator i {
+            font-size: 10px;
+        }
+
+        /* 历史时间线 */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            background-color: var(--bg-primary);
+            border-radius: var(--small-radius);
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            border: 3px solid var(--bg-primary);
+        }
+
+        .timeline-date {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .timeline-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .timeline-post {
+            background-color: rgba(148, 13, 20, 0.05);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .timeline-empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-tertiary);
+        }
+
+        .timeline-empty i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--border-color);
+        }
+
+        /* 评论区域 */
+        .comments-section {
+            margin-top: 16px;
+        }
+
+        .comments-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-count {
+            background-color: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--small-radius);
+            transition: background-color 0.2s;
+        }
+
+        .comment-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+        .comment-username {
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .comment-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .comment-time {
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+
+        .comment-votes {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            width: 100%;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            color: var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .empty-text {
+            color: var(--text-tertiary);
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+
+        /* 回到顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .back-to-top:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 底部信息 */
+        .footer {
+            text-align: center;
+            padding: 40px 24px 24px;
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-color);
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            background-color: var(--bg-primary);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            width: 100%;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 - 移动端优化 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+            
+            .logo {
+                font-size: 16px;
+            }
+            
+            .main-container {
+                padding: 16px;
+            }
+            
+            .date-selector-container {
+                padding: 20px;
+            }
+            
+            .hole-card {
+                padding: 16px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .post-time {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .post-time-info {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .file-stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            /* 移动端只使用传统布局 */
+            .split-layout {
+                flex-direction: column;
+            }
+            
+            .posts-container {
+                max-width: 100%;
+            }
+            
+            .right-panel {
+                position: static;
+                max-height: none;
+                order: -1;
+                min-height: 300px;
+                margin-bottom: 20px;
+            }
+            
+            .control-panel {
+                flex-direction: column;
+            }
+            
+            .control-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-end;
+            }
+            
+            .toggle-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .modal-content {
+                max-height: 95vh;
+            }
+            
+            .feature-grid, .shortcut-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-selector-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .date-button {
+                justify-content: center;
+            }
+            
+            /* 移动端隐藏分屏交互选项 */
+            #splitInteractionGroup {
+                display: none !important;
+            }
+            
+            /* 移动端默认使用传统布局 */
+            #layoutSelect option[value="split"] {
+                display: none;
+            }
+            
+            /* 移动端日期栏调整 */
+            .current-date-bar {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .current-date-display {
+                font-size: 14px;
+            }
+            
+            .date-bar-stats {
+                display: none; /* 移动端隐藏统计信息节省空间 */
+            }
+            
+            /* 移动端隐私提示 */
+            .privacy-notice-mobile {
+                display: block !important;
+                background-color: rgba(76, 175, 80, 0.1);
+                border-left: 3px solid #4CAF50;
+                border-radius: 4px;
+                padding: 12px;
+                margin: 16px 0;
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+        }
+
+        /* 特殊样式 */
+        .emoji {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+
+        .mention {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .missed-post {
+            opacity: 0.7;
+            background-color: var(--bg-tertiary);
+        }
+
+        .missed-post .card-content {
+            font-style: italic;
+            color: var(--text-tertiary);
+        }
+
+        .deleted-post {
+            background-color: rgba(255, 107, 107, 0.05);
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .hole-card.hidden {
+            display: none;
+        }
+
+        /* 隐私提示 */
+        .privacy-notice-mobile {
+            display: none;
+        }
+        
+        /* 隐私强调样式 */
+        .privacy-highlight {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4CAF50;
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+        
+        .privacy-highlight i {
+            color: #4CAF50;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 当前日期显示栏 -->
+    <div class="current-date-bar" id="currentDateBar">
+        <div class="date-bar-left">
+            <span class="date-bar-title">当前查看：</span>
+            <span class="current-date-display" id="currentDateDisplay">未选择日期</span>
+        </div>
+        <div class="date-bar-right">
+            <div class="date-bar-stats" id="dateBarStats">
+                <span>树洞: <span id="dateBarPostCount">0</span></span>
+                <span>评论: <span id="dateBarCommentCount">0</span></span>
+            </div>
+            <button class="date-bar-close" id="hideDateBarBtn" title="隐藏日期栏">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 关于页面模态框 -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-info-circle"></i>
+                    关于北京大学树洞档案馆
+                </div>
+                <button class="modal-close" id="closeAboutBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3><i class="fas fa-book"></i> 项目介绍</h3>
+                    <p>北京大学树洞档案馆是一个保存和展示北京大学树洞历史数据的项目。树洞是北京大学学生匿名交流的平台，这里存档了从2013年到2019年的历史数据。</p>
+                    <p>本项目致力于可视化这些珍贵的历史数据，让用户能够回顾过去的讨论。</p>
+                    
+                    <div class="privacy-highlight">
+                        <p><i class="fas fa-shield-alt"></i> <strong>隐私声明：</strong>所有浏览数据（包括历史记录、用户偏好等）仅存储在您的浏览器本地（localStorage），不会上传到任何服务器。网络请求仅限于从GitHub仓库获取历史帖子数据。</p>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-star"></i> 主要功能</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-sort-amount-down"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">多种排序方式</div>
+                                <div class="feature-desc">按时间、热度、评论数、围观数排序</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-columns"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">智能推荐</div>
+                                <div class="feature-desc">基于浏览历史的个性化推荐</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">热度算法</div>
+                                <div class="feature-desc">智能计算帖子热度，发现优质内容</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">历史时间线</div>
+                                <div class="feature-desc">记录您的浏览历史，快速跳转</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">本地缓存</div>
+                                <div class="feature-desc">缓存已访问数据，减少网络请求</div>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-filter"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">内容过滤</div>
+                                <div class="feature-desc">过滤被删除和缺失的帖子</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-gamepad"></i> 操作指南</h3>
+                    <h4>基本操作</h4>
+                    <p>1. 选择日期并点击"加载"按钮查看该日期的树洞</p>
+                    <p>2. 使用"前一天"和"后一天"按钮快速切换日期</p>
+                    <p>3. 在控制面板中选择排序方式和布局模式</p>
+                    <p>4. 点击帖子查看详细内容和评论</p>
+                    
+                    <h4>分屏布局（桌面端）</h4>
+                    <p>• 左侧显示帖子列表，右侧显示选中帖子的详细内容和评论</p>
+                    <p>• 支持点击展开和鼠标悬停两种交互模式</p>
+                    <p>• 点击帖子时自动滚动到合适位置</p>
+                    
+                    <h4>快捷键</h4>
+                    <div class="shortcut-grid">
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">上一个帖子</span>
+                            <kbd class="shortcut-key">↑ / K</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">下一个帖子</span>
+                            <kbd class="shortcut-key">↓ / J</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">打开/关闭评论</span>
+                            <kbd class="shortcut-key">空格</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">回到顶部</span>
+                            <kbd class="shortcut-key">Home</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">到底部</span>
+                            <kbd class="shortcut-key">End</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">切换布局</span>
+                            <kbd class="shortcut-key">L</kbd>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-code"></i> 技术细节</h3>
+                    <p><strong>热度算法：</strong>热度 = 评论数 × 1.2 + 围观数 × 1.5</p>
+                    <p><strong>热度分级：</strong>前1%紫色，1%-5%红色，5%-20%橙色，20%-99%灰色，热度1.0绿色</p>
+                    <p><strong>推荐算法：</strong>基于TF-IDF和余弦相似度的混合推荐，权重为0.15</p>
+                    <p><strong>数据来源：</strong>原始数据来自GitHub用户woct0rdho的珍贵存档pkuholebackup，包含2013年12月15日至2019年11月24日的数据</p>
+                    <p><strong>隐私保护：</strong>所有用户数据本地存储，不上传任何浏览记录或个人信息</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史时间线模态框 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-history"></i>
+                    历史时间线
+                </div>
+                <button class="modal-close" id="closeHistoryBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin: 0;">您的浏览历史</h3>
+                        <p style="color: var(--text-tertiary); font-size: 14px; margin-top: 4px;">点击记录可快速跳转</p>
+                    </div>
+                    <button id="clearHistoryBtn" style="padding: 8px 16px; background-color: var(--bg-tertiary); color: var(--text-secondary); border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-trash"></i> 清除历史
+                    </button>
+                </div>
+                
+                <div class="timeline" id="timelineContainer">
+                    <!-- 时间线内容将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button class="back-to-top" id="backToTopBtn">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- 顶部导航栏 -->
+    <div class="header">
+        <div class="logo">
+            <span>PKU Hole Archive 北大树洞档案馆</span>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="aboutBtn">
+                <i class="fas fa-info-circle"></i>
+                <span>关于</span>
+            </button>
+            <button class="header-btn" id="historyBtn">
+                <i class="fas fa-history"></i>
+                <span>历史时间线</span>
+            </button>
+            <div class="toggle-group">
+                <span class="toggle-label">展示缺失帖子</span>
+                <button class="toggle-switch" id="toggleMissedBtn"></button>
+            </div>
+            <div class="toggle-group">
+                <span class="toggle-label">展示被删帖子</span>
+                <button class="toggle-switch active" id="toggleDeletedBtn"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 日期选择区域 - 改进版 -->
+        <div class="date-selector-container">
+            <div class="date-selector-title">
+                <i class="fas fa-calendar-alt"></i> 选择日期
+            </div>
+            
+            <div class="date-selector-grid">
+                <div class="mode-indicator" id="modeIndicator">
+                    <span id="modeText">📁 本地模式</span>
+                    <button id="modeToggle" class="mode-toggle">切换</button>
+                </div>
+                
+                <div class="date-input-wrapper">
+                    <label class="date-input-label">选择日期</label>
+                    <input type="date" id="dateInput" class="date-input" title="选择日期范围: 2013-12-15 到 2019-11-24">
+                </div>
+                
+                <button id="loadBtn" class="date-button primary">
+                    <i class="fas fa-download"></i> 加载
+                </button>
+                
+                <button id="prevDayBtn" class="date-button secondary small" title="加载前一天">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                
+                <button id="nextDayBtn" class="date-button secondary small" title="加载后一天">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                
+                <button id="clearCacheBtn" class="date-button secondary" title="清除缓存">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            
+            <div class="date-info">
+                <i class="fas fa-info-circle"></i>
+                可选日期范围: <span class="date-range">2013-12-15</span> 至 <span class="date-range">2019-11-24</span>
+            </div>
+            
+            <!-- 移动端隐私提示 -->
+            <div class="privacy-notice-mobile">
+                <i class="fas fa-shield-alt"></i> 所有浏览数据仅存储在您的设备本地，不会上传到任何服务器。
+            </div>
+            
+            <!-- 控制面板 -->
+            <div class="control-panel" style="margin-top: 20px;">
+                <!-- 排序控制 -->
+                <div class="control-group">
+                    <span class="control-label">排序方式：</span>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="hotness" selected>按热度排序</option>
+                        <option value="time_desc">按时间倒序</option>
+                        <option value="time_asc">按时间正序</option>
+                        <option value="comments">按评论数排序</option>
+                        <option value="watches">按围观数排序</option>
+                        <option value="recommend">智能推荐</option>
+                    </select>
+                </div>
+                
+                <!-- 布局控制（移动端隐藏分屏选项） -->
+                <div class="control-group">
+                    <span class="control-label">布局模式：</span>
+                    <select id="layoutSelect" class="sort-select">
+                        <option value="split" selected>分屏布局</option>
+                        <option value="traditional">传统布局</option>
+                    </select>
+                </div>
+                
+                <!-- 分屏布局交互模式 -->
+                <div class="control-group" id="splitInteractionGroup">
+                    <span class="control-label">分屏交互：</span>
+                    <select id="interactionSelect" class="sort-select">
+                        <option value="click">点击展开</option>
+                        <option value="hover">鼠标悬停</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="file-info" id="fileInfo" style="display: none;">
+                <div class="file-name" id="fileName">未选择日期</div>
+                <div class="file-stats">
+                    <span id="postCount">树洞: 0</span>
+                    <span id="commentCount">评论: 0</span>
+                    <span id="cacheIndicator"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 初始空状态 -->
+        <div class="empty-state" id="emptyState">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="upload-text">点击上方【加载】北大树洞档案</div>
+                <div class="upload-subtext">
+                    选择日期加载北京大学树洞的历史记录
+                </div>
+            </div>
+        </div>
+
+        <!-- 树洞内容容器 - 分屏布局 -->
+        <div class="split-layout" id="splitLayout" style="display: none;">
+            <!-- 右侧面板：帖子详情和评论 -->
+            <div class="right-panel" id="rightPanel">
+                <div class="right-panel-header">
+                    <div class="right-panel-title">
+                        <i class="fas fa-file-alt"></i> 帖子详情
+                    </div>
+                    <button class="right-panel-close" id="closeRightPanelBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="right-panel-content" id="rightPanelContent">
+                    <div class="empty-panel">
+                        <div class="empty-panel-icon">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="empty-panel-title">选择左侧的帖子查看详情</div>
+                        <div class="empty-panel-text">点击或悬停左侧的帖子卡片，这里将显示完整的帖子内容和所有评论</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 左侧：帖子列表 -->
+            <div class="posts-container" id="postsContainer">
+                <!-- 帖子列表将在这里动态加载 -->
+                <div class="posts-scroll-area" id="postsScrollArea"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="footer">
+        <div>北京大学树洞档案馆 · 2013 - 2026</div>
+        <div># 数据来源：<a href="https://github.com/woct0rdho/pkuholebackup">GitHub仓库pkuholebackup</a>
+        <div># 已缓存：<span id="cacheStats">0</span> 天的数据 | 历史记录：<span id="historyStats">0</span> 条</div>
+        <div># 快捷键：↑/↓ 浏览帖子 | 空格 展开/关闭评论 | L 切换布局</div>
+        <div style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary);">
+            <i class="fas fa-shield-alt"></i> 隐私保护：所有浏览数据仅存储在您的浏览器本地
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentData = {
+            date: null,
+            posts: [],
+            stats: {
+                totalPosts: 0,
+                totalComments: 0,
+                dateRange: null
+            }
+        };
+        let currentDate = null;
+        let showMissedPosts = false; // 默认不显示数据库中缺失的帖子
+        let showDeletedPosts = true; // 默认显示被删除的帖子
+        let isOnlineMode = false; // 默认本地模式
+        let currentSortMethod = 'hotness'; // 默认按热度排序
+        let currentLayout = 'split'; // 默认分屏布局
+        let currentInteraction = 'click'; // 分屏布局交互模式
+        let activePostId = null; // 当前激活的帖子ID
+        let useCache = true; // 是否使用缓存
+        let userPreferenceVector = null; // 用户偏好向量（用于算法推荐）
+        let isMobile = false; // 是否移动设备
+        let dateBarVisible = true; // 日期栏是否可见
+
+        // 缓存和历史记录相关
+        const CACHE_PREFIX = 'pku_hole_cache_';
+        const HISTORY_KEY = 'pku_hole_history';
+        const USER_PREFERENCE_KEY = 'pku_hole_user_preference';
+        const DATE_BAR_VISIBLE_KEY = 'pku_hole_date_bar_visible';
+        const CACHE_EXPIRY_DAYS = 30; // 缓存过期天数
+        const MAX_HISTORY_ITEMS = 200; // 最大历史记录数
+        const RECOMMEND_WEIGHT = 0.15; // 推荐算法权重（15%）
+
+        // DOM 元素
+        const currentDateBar = document.getElementById('currentDateBar');
+        const currentDateDisplay = document.getElementById('currentDateDisplay');
+        const dateBarPostCount = document.getElementById('dateBarPostCount');
+        const dateBarCommentCount = document.getElementById('dateBarCommentCount');
+        const hideDateBarBtn = document.getElementById('hideDateBarBtn');
+        const dateInput = document.getElementById('dateInput');
+        const loadBtn = document.getElementById('loadBtn');
+        const modeToggle = document.getElementById('modeToggle');
+        const modeText = document.getElementById('modeText');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const postCount = document.getElementById('postCount');
+        const commentCount = document.getElementById('commentCount');
+        const cacheIndicator = document.getElementById('cacheIndicator');
+        const postsContainer = document.getElementById('postsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const uploadArea = document.getElementById('uploadArea');
+        const prevDayBtn = document.getElementById('prevDayBtn');
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        const toggleMissedBtn = document.getElementById('toggleMissedBtn');
+        const toggleDeletedBtn = document.getElementById('toggleDeletedBtn');
+        const sortSelect = document.getElementById('sortSelect');
+        const layoutSelect = document.getElementById('layoutSelect');
+        const interactionSelect = document.getElementById('interactionSelect');
+        const splitInteractionGroup = document.getElementById('splitInteractionGroup');
+        const rightPanel = document.getElementById('rightPanel');
+        const rightPanelContent = document.getElementById('rightPanelContent');
+        const closeRightPanelBtn = document.getElementById('closeRightPanelBtn');
+        const splitLayout = document.getElementById('splitLayout');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        const postsScrollArea = document.getElementById('postsScrollArea');
+        const aboutBtn = document.getElementById('aboutBtn');
+        const aboutModal = document.getElementById('aboutModal');
+        const closeAboutBtn = document.getElementById('closeAboutBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyModal = document.getElementById('historyModal');
+        const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const cacheStats = document.getElementById('cacheStats');
+        const historyStats = document.getElementById('historyStats');
+
+        // 检测设备类型
+        function detectDevice() {
+            isMobile = window.innerWidth <= 768;
+            
+            // 移动端默认使用传统布局
+            if (isMobile) {
+                currentLayout = 'traditional';
+                layoutSelect.value = 'traditional';
+                splitInteractionGroup.style.display = 'none';
+                
+                // 隐藏分屏选项
+                const splitOption = document.querySelector('#layoutSelect option[value="split"]');
+                if (splitOption) splitOption.style.display = 'none';
+            }
+        }
+
+        // 更新日期栏显示
+        function updateDateBar(dateStr, postCount, commentCount) {
+            if (!dateStr) return;
+            
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const displayDate = `${year}年${month}月${day}日`;
+            
+            currentDateDisplay.textContent = displayDate;
+            dateBarPostCount.textContent = postCount;
+            dateBarCommentCount.textContent = commentCount;
+            
+            if (dateBarVisible) {
+                currentDateBar.classList.add('visible');
+            }
+        }
+
+        // 切换日期栏显示
+        function toggleDateBar() {
+            dateBarVisible = !dateBarVisible;
+            if (dateBarVisible) {
+                currentDateBar.classList.add('visible');
+            } else {
+                currentDateBar.classList.remove('visible');
+            }
+            
+            // 保存偏好
+            try {
+                localStorage.setItem(DATE_BAR_VISIBLE_KEY, JSON.stringify(dateBarVisible));
+            } catch (e) {
+                console.error('保存日期栏显示状态时出错:', e);
+            }
+        }
+
+        // 初始化缓存和统计
+        function initCacheAndStats() {
+            updateCacheStats();
+            updateHistoryStats();
+            loadUserPreference();
+            loadDateBarPreference();
+        }
+
+        // 加载日期栏显示偏好
+        function loadDateBarPreference() {
+            try {
+                const saved = localStorage.getItem(DATE_BAR_VISIBLE_KEY);
+                if (saved !== null) {
+                    dateBarVisible = JSON.parse(saved);
+                    if (dateBarVisible) {
+                        currentDateBar.classList.add('visible');
+                    }
+                }
+            } catch (e) {
+                console.error('加载日期栏显示状态时出错:', e);
+            }
+        }
+
+        // 加载用户偏好向量
+        function loadUserPreference() {
+            try {
+                const pref = localStorage.getItem(USER_PREFERENCE_KEY);
+                if (pref) {
+                    userPreferenceVector = JSON.parse(pref);
+                    console.log(`加载用户偏好向量，包含 ${Object.keys(userPreferenceVector).length} 个词项`);
+                } else {
+                    userPreferenceVector = {};
+                    console.log('初始化新的用户偏好向量');
+                }
+            } catch (e) {
+                console.error('加载用户偏好时出错:', e);
+                userPreferenceVector = {};
+            }
+        }
+
+        // 保存用户偏好向量
+        function saveUserPreference() {
+            try {
+                localStorage.setItem(USER_PREFERENCE_KEY, JSON.stringify(userPreferenceVector));
+            } catch (e) {
+                console.error('保存用户偏好时出错:', e);
+            }
+        }
+
+        // 更新用户偏好向量（基于点击的帖子）- 工业级TF-IDF简化版
+        function updateUserPreference(postContent) {
+            if (!postContent || postContent === '#MISSED') return;
+            
+            // 1. 中文分词（简化版：按字符分割，过滤停用词）
+            const stopWords = new Set(['的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这']);
+            
+            // 移除标点符号和特殊字符，保留中文、英文、数字
+            const cleanedContent = postContent
+                .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, ' ')
+                .toLowerCase();
+            
+            // 简单的按空格分割（英文）和按字符分割（中文）
+            const words = [];
+            const tokens = cleanedContent.split(/\s+/);
+            
+            tokens.forEach(token => {
+                if (/^[\u4e00-\u9fa5]+$/.test(token)) {
+                    // 中文：按字符分割
+                    for (let i = 0; i < token.length; i++) {
+                        const char = token[i];
+                        if (!stopWords.has(char) && char.length > 0) {
+                            words.push(char);
+                        }
+                    }
+                } else if (/^[a-zA-Z0-9]+$/.test(token) && token.length > 2) {
+                    // 英文：长度大于2的单词
+                    if (!stopWords.has(token)) {
+                        words.push(token);
+                    }
+                }
+            });
+            
+            // 2. 更新词频，使用指数衰减（新词权重更高）
+            const decayFactor = 0.95; // 旧词衰减因子
+            
+            // 先衰减现有向量
+            Object.keys(userPreferenceVector).forEach(word => {
+                userPreferenceVector[word] *= decayFactor;
+            });
+            
+            // 添加新词
+            words.forEach(word => {
+                if (userPreferenceVector[word]) {
+                    userPreferenceVector[word] += 1;
+                } else {
+                    userPreferenceVector[word] = 1;
+                }
+            });
+            
+            // 3. 归一化处理
+            let maxFreq = 0;
+            Object.values(userPreferenceVector).forEach(freq => {
+                if (freq > maxFreq) maxFreq = freq;
+            });
+            
+            if (maxFreq > 0) {
+                Object.keys(userPreferenceVector).forEach(word => {
+                    userPreferenceVector[word] = userPreferenceVector[word] / maxFreq;
+                });
+            }
+            
+            // 4. 限制向量大小，只保留前200个最重要的词
+            const sortedEntries = Object.entries(userPreferenceVector)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 200);
+            
+            userPreferenceVector = Object.fromEntries(sortedEntries);
+            saveUserPreference();
+            
+            console.log(`更新用户偏好向量，当前包含 ${Object.keys(userPreferenceVector).length} 个词项`);
+        }
+
+        // 计算帖子与用户偏好的相似度（改进版余弦相似度）
+        function calculateSimilarity(postContent) {
+            if (!userPreferenceVector || Object.keys(userPreferenceVector).length === 0) {
+                return 0;
+            }
+            
+            // 同样方式处理帖子内容
+            const stopWords = new Set(['的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这']);
+            
+            const cleanedContent = postContent
+                .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, ' ')
+                .toLowerCase();
+            
+            const postVector = {};
+            const tokens = cleanedContent.split(/\s+/);
+            let totalWords = 0;
+            
+            tokens.forEach(token => {
+                if (/^[\u4e00-\u9fa5]+$/.test(token)) {
+                    for (let i = 0; i < token.length; i++) {
+                        const char = token[i];
+                        if (!stopWords.has(char) && char.length > 0) {
+                            postVector[char] = (postVector[char] || 0) + 1;
+                            totalWords++;
+                        }
+                    }
+                } else if (/^[a-zA-Z0-9]+$/.test(token) && token.length > 2) {
+                    if (!stopWords.has(token)) {
+                        postVector[token] = (postVector[token] || 0) + 1;
+                        totalWords++;
+                    }
+                }
+            });
+            
+            // 计算TF-IDF加权（简化版）
+            const postTFIDF = {};
+            Object.entries(postVector).forEach(([word, freq]) => {
+                // TF (词频)
+                const tf = freq / Math.max(totalWords, 1);
+                // IDF (逆文档频率，简化版：使用用户偏好中的权重)
+                const idf = userPreferenceVector[word] || 0.1;
+                postTFIDF[word] = tf * idf;
+            });
+            
+            // 计算余弦相似度
+            let dotProduct = 0;
+            let userNorm = 0;
+            let postNorm = 0;
+            
+            // 计算点积和用户向量模长
+            Object.entries(userPreferenceVector).forEach(([word, weight]) => {
+                userNorm += weight * weight;
+                if (postTFIDF[word]) {
+                    dotProduct += weight * postTFIDF[word];
+                }
+            });
+            
+            // 计算帖子向量模长
+            Object.values(postTFIDF).forEach(weight => {
+                postNorm += weight * weight;
+            });
+            
+            userNorm = Math.sqrt(userNorm);
+            postNorm = Math.sqrt(postNorm);
+            
+            if (userNorm === 0 || postNorm === 0) {
+                return 0;
+            }
+            
+            const similarity = dotProduct / (userNorm * postNorm);
+            
+            // 应用sigmoid函数平滑输出
+            return 1 / (1 + Math.exp(-5 * (similarity - 0.5)));
+        }
+
+        // 推荐算法：混合排序（基于当前排序方式，加入推荐权重）
+        function applyRecommendationAlgorithm(posts, baseSortMethod) {
+            if (baseSortMethod === 'recommend') {
+                // 如果是推荐模式，完全按相似度排序
+                return posts.map(post => {
+                    if (!post.isMissed && !post.isDeleted) {
+                        post.similarity = calculateSimilarity(post.content);
+                    } else {
+                        post.similarity = 0;
+                    }
+                    return post;
+                }).sort((a, b) => {
+                    // 缺失和被删除的帖子放最后
+                    if (a.isMissed && !b.isMissed) return 1;
+                    if (!a.isMissed && b.isMissed) return -1;
+                    if (a.isDeleted && !b.isDeleted) return 1;
+                    if (!a.isDeleted && b.isDeleted) return -1;
+                    
+                    return b.similarity - a.similarity;
+                });
+            } else {
+                // 混合排序：基于当前排序，加入推荐权重
+                const postsWithScore = posts.map(post => {
+                    // 计算基础分数
+                    let baseScore = 0;
+                    
+                    switch(baseSortMethod) {
+                        case 'hotness':
+                            baseScore = parseFloat(post.hotness) || 0;
+                            break;
+                        case 'time_desc':
+                            baseScore = post.id; // 时间倒序：ID越大分数越高
+                            break;
+                        case 'time_asc':
+                            baseScore = -post.id; // 时间正序：ID越小分数越高
+                            break;
+                        case 'comments':
+                            baseScore = post.comments.length;
+                            break;
+                        case 'watches':
+                            baseScore = Math.abs(post.watches) || 0;
+                            break;
+                        default:
+                            baseScore = parseFloat(post.hotness) || 0;
+                    }
+                    
+                    // 计算推荐分数
+                    let recommendScore = 0;
+                    if (!post.isMissed && !post.isDeleted) {
+                        recommendScore = calculateSimilarity(post.content);
+                        post.similarity = recommendScore;
+                    }
+                    
+                    // 混合分数：baseScore * (1 - weight) + recommendScore * weight
+                    const totalScore = baseScore * (1 - RECOMMEND_WEIGHT) + recommendScore * RECOMMEND_WEIGHT * 100;
+                    
+                    return {
+                        ...post,
+                        _sortScore: totalScore,
+                        _baseScore: baseScore,
+                        _recommendScore: recommendScore
+                    };
+                });
+                
+                // 按总分数排序
+                return postsWithScore.sort((a, b) => {
+                    // 缺失和被删除的帖子放最后
+                    if (a.isMissed && !b.isMissed) return 1;
+                    if (!a.isMissed && b.isMissed) return -1;
+                    if (a.isDeleted && !b.isDeleted) return 1;
+                    if (!a.isDeleted && b.isDeleted) return -1;
+                    
+                    return b._sortScore - a._sortScore;
+                }).map(({_sortScore, _baseScore, _recommendScore, ...post}) => post);
+            }
+        }
+
+        // 更新缓存统计
+        function updateCacheStats() {
+            let cacheCount = 0;
+            const now = Date.now();
+            const expiryTime = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith(CACHE_PREFIX)) {
+                    try {
+                        const cacheData = JSON.parse(localStorage.getItem(key));
+                        if (cacheData && cacheData.timestamp && (now - cacheData.timestamp) < expiryTime) {
+                            cacheCount++;
+                        }
+                    } catch (e) {
+                        // 忽略解析错误的缓存
+                    }
+                }
+            }
+            
+            cacheStats.textContent = cacheCount;
+        }
+
+        // 更新历史记录统计
+        function updateHistoryStats() {
+            const history = getHistory();
+            historyStats.textContent = history.length;
+        }
+
+        // 获取缓存键名
+        function getCacheKey(dateStr) {
+            return `${CACHE_PREFIX}${dateStr}`;
+        }
+
+        // 从缓存获取数据
+        function getFromCache(dateStr) {
+            if (!useCache) return null;
+            
+            const cacheKey = getCacheKey(dateStr);
+            const cached = localStorage.getItem(cacheKey);
+            
+            if (!cached) return null;
+            
+            try {
+                const cacheData = JSON.parse(cached);
+                const now = Date.now();
+                const expiryTime = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+                
+                // 检查缓存是否过期
+                if (cacheData.timestamp && (now - cacheData.timestamp) < expiryTime) {
+                    return cacheData.data;
+                } else {
+                    // 缓存过期，删除
+                    localStorage.removeItem(cacheKey);
+                    return null;
+                }
+            } catch (e) {
+                console.error('解析缓存数据时出错:', e);
+                return null;
+            }
+        }
+
+        // 保存数据到缓存
+        function saveToCache(dateStr, data) {
+            if (!useCache) return;
+            
+            const cacheKey = getCacheKey(dateStr);
+            const cacheData = {
+                data: data,
+                timestamp: Date.now()
+            };
+            
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                updateCacheStats();
+            } catch (e) {
+                console.error('保存缓存时出错:', e);
+            }
+        }
+
+        // 清除所有缓存
+        function clearAllCache() {
+            const keysToRemove = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith(CACHE_PREFIX) || key === USER_PREFERENCE_KEY) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            userPreferenceVector = {};
+            updateCacheStats();
+            alert(`已清除 ${keysToRemove.length} 个缓存条目和用户偏好数据`);
+        }
+
+        // 历史记录相关函数
+        function getHistory() {
+            try {
+                const historyJson = localStorage.getItem(HISTORY_KEY);
+                return historyJson ? JSON.parse(historyJson) : [];
+            } catch (e) {
+                console.error('读取历史记录时出错:', e);
+                return [];
+            }
+        }
+
+        function saveHistory(history) {
+            try {
+                // 限制历史记录数量
+                if (history.length > MAX_HISTORY_ITEMS) {
+                    history = history.slice(history.length - MAX_HISTORY_ITEMS);
+                }
+                
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                updateHistoryStats();
+            } catch (e) {
+                console.error('保存历史记录时出错:', e);
+            }
+        }
+
+        function addHistoryItem(type, data) {
+            const history = getHistory();
+            const now = new Date();
+            
+            const historyItem = {
+                type: type,
+                data: data,
+                timestamp: now.getTime(),
+                displayTime: now.toLocaleString('zh-CN')
+            };
+            
+            history.push(historyItem);
+            saveHistory(history);
+            updateHistoryStats();
+        }
+
+        function clearHistory() {
+            if (confirm('确定要清除所有历史记录吗？同时会清除用户推荐偏好。')) {
+                localStorage.removeItem(HISTORY_KEY);
+                localStorage.removeItem(USER_PREFERENCE_KEY);
+                userPreferenceVector = {};
+                updateHistoryStats();
+                renderTimeline();
+                alert('历史记录和用户偏好已清除');
+            }
+        }
+
+        // 渲染时间线
+        function renderTimeline() {
+            const history = getHistory();
+            
+            if (history.length === 0) {
+                timelineContainer.innerHTML = `
+                    <div class="timeline-empty">
+                        <i class="fas fa-history"></i>
+                        <div>暂无历史记录</div>
+                        <p style="margin-top: 8px; font-size: 14px;">开始浏览树洞档案，这里会记录您的活动</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 按时间倒序排列
+            const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
+            
+            let html = '';
+            
+            sortedHistory.forEach((item, index) => {
+                if (item.type === 'date_view') {
+                    html += `
+                        <div class="timeline-item" data-date="${item.data.date}" onclick="jumpToDate('${item.data.date}')">
+                            <div class="timeline-date">
+                                <i class="fas fa-calendar-day"></i>
+                                ${item.data.date}
+                            </div>
+                            <div class="timeline-time">${item.displayTime}</div>
+                            <div class="timeline-content">历史上的这一天PKUer发了 ${item.data.postCount} 个帖子，贡献了 ${item.data.commentCount} 条评论</div>
+                        </div>
+                    `;
+                } else if (item.type === 'post_view') {
+                    html += `
+                        <div class="timeline-item timeline-post" data-date="${item.data.date}" data-post-id="${item.data.postId}" onclick="jumpToPost('${item.data.date}', ${item.data.postId})">
+                            <div class="timeline-date">
+                                <i class="fas fa-file-alt"></i>
+                                帖子 #${item.data.postId}
+                            </div>
+                            <div class="timeline-time">${item.displayTime}</div>
+                            <div class="timeline-content">在 ${item.data.date} 查看了帖子 "${item.data.preview}"</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            timelineContainer.innerHTML = html;
+        }
+
+        // 跳转到日期
+        function jumpToDate(dateStr) {
+            const formattedDate = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+            dateInput.value = formattedDate;
+            loadFileByDate(dateStr);
+            closeModal(historyModal);
+        }
+
+        // 跳转到帖子
+        function jumpToPost(dateStr, postId) {
+            jumpToDate(dateStr);
+            
+            // 等待数据加载完成后跳转到帖子
+            setTimeout(() => {
+                const postElement = document.querySelector(`.hole-card[data-id="${postId}"]`);
+                if (postElement) {
+                    if (currentLayout === 'split' && !isMobile) {
+                        showRightPanel(postId, true);
+                        
+                        // 滚动到帖子位置
+                        const containerTop = postsContainer.getBoundingClientRect().top;
+                        const cardTop = postElement.getBoundingClientRect().top;
+                        const scrollAmount = cardTop - containerTop - 20;
+                        
+                        postsContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                    }
+                }
+            }, 500);
+            
+            closeModal(historyModal);
+        }
+
+        // 关闭模态框
+        function closeModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        // 打开模态框
+        function openModal(modal) {
+            modal.classList.add('active');
+            if (modal === historyModal) {
+                renderTimeline();
+            }
+        }
+
+        // 热度计算函数
+        function calculateHotness(post) {
+            // 基础热度 = 评论数 × 1.2 + 围观数 × 1.5
+            const commentCount = post.comments.length;
+            const watchCount = Math.abs(post.watches) || 0;
+            let hotness = commentCount * 1.2 + watchCount * 1.5;
+            
+            // 对于没有任何评论和围观的帖子，默认热度为1.0
+            if (commentCount === 0 && watchCount === 0) {
+                hotness = 1.0;
+            }
+            
+            return hotness.toFixed(1); // 显示到小数点后1位
+        }
+
+        // 解析树洞文件
+        function parseHoleFile(content) {
+            const lines = content.split('\n');
+            const posts = [];
+            let currentPost = null;
+            let pendingComment = null; // 用于多行评论
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                
+                // 解析帖子行
+                const postMatch = line.match(/^#p\s+(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(-?\d+)\s+(-?\d+)$/);
+                if (postMatch) {
+                    if (currentPost) {
+                        posts.push(currentPost);
+                    }
+                    
+                    const postId = parseInt(postMatch[1]);
+                    const timestamp = postMatch[2];
+                    const watches = parseInt(postMatch[3]);
+                    
+                    currentPost = {
+                        id: postId,
+                        time: timestamp,
+                        watches: watches,
+                        content: '',
+                        comments: [],
+                        isMissed: false,
+                        isDeleted: false, // 新增：标记是否是被删除的帖子
+                        hotness: 0, // 初始热度
+                        similarity: 0 // 推荐相似度
+                    };
+                    pendingComment = null; // 重置
+                    continue;
+                }
+                
+                // 解析评论开始行
+                const commentStartMatch = line.match(/^#c\s+(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})$/);
+                if (commentStartMatch && currentPost) {
+                    const commentId = commentStartMatch[1];
+                    const timestamp = commentStartMatch[2];
+                    pendingComment = {
+                        id: commentId,
+                        time: timestamp,
+                        user: '',
+                        content: ''
+                    };
+                    continue;
+                }
+                
+                // 解析评论内容行
+                if (pendingComment && currentPost) {
+                    const commentContentMatch = line.match(/^\[([^\]]+)\]\s*(.+)$/);
+                    if (commentContentMatch) {
+                        pendingComment.user = commentContentMatch[1];
+                        pendingComment.content = commentContentMatch[2];
+                        currentPost.comments.push(pendingComment);
+                        pendingComment = null;
+                        continue;
+                    }
+                }
+                
+                // MISSED 条目
+                if (line.startsWith('#MISSED') && currentPost) {
+                    currentPost.content = '#MISSED';
+                    currentPost.isMissed = true;
+                    pendingComment = null;
+                    continue;
+                }
+                
+                // 帖子内容 - 检查是否以#DELETED开头
+                if (currentPost && !currentPost.content.startsWith('#MISSED')) {
+                    // 检查是否是#DELETED帖子
+                    if (line.startsWith('#DELETED')) {
+                        currentPost.isDeleted = true;
+                        // 移除#DELETED标记，只保留后面的内容
+                        const remainingContent = line.substring('#DELETED'.length).trim();
+                        if (remainingContent) {
+                            currentPost.content = remainingContent;
+                        }
+                        continue;
+                    }
+                    
+                    if (currentPost.content) {
+                        currentPost.content += '\n' + line;
+                    } else {
+                        currentPost.content = line;
+                    }
+                }
+            }
+            
+            // 添加最后一个帖子
+            if (currentPost) {
+                posts.push(currentPost);
+            }
+            
+            // 计算每个帖子的热度
+            posts.forEach(post => {
+                if (!post.isMissed) {
+                    post.hotness = calculateHotness(post);
+                } else {
+                    post.hotness = 0;
+                }
+            });
+            
+            // 计算统计信息
+            const totalComments = posts.reduce((sum, post) => sum + post.comments.length, 0);
+            
+            // 确定日期
+            let date = null;
+            if (posts.length > 0) {
+                const firstPostTime = posts[0].time;
+                date = firstPostTime.substring(0, 10);
+            }
+            
+            // 应用推荐算法
+            const sortedPosts = applyRecommendationAlgorithm(posts, currentSortMethod);
+            
+            return {
+                date: date,
+                posts: sortedPosts,
+                stats: {
+                    totalPosts: sortedPosts.length,
+                    totalComments: totalComments,
+                    dateRange: date
+                }
+            };
+        }
+
+        // 获取热度颜色类
+        function getHotnessColorClass(hotness, hotnessPercentile) {
+            if (hotness === 1.0) {
+                return 'green'; // 热度1.0为绿色
+            }
+            
+            if (hotnessPercentile <= 0.01) {
+                return 'purple'; // 前1%
+            } else if (hotnessPercentile <= 0.05) {
+                return 'red'; // 1%-5%
+            } else if (hotnessPercentile <= 0.20) {
+                return 'orange'; // 5%-20%
+            } else {
+                return 'gray'; // 20%-99%
+            }
+        }
+
+        // 计算热度百分位
+        function calculateHotnessPercentiles(posts) {
+            // 过滤掉缺失和被删除的帖子，只计算有热度的帖子
+            const validPosts = posts.filter(post => !post.isMissed && !post.isDeleted && post.hotness > 0);
+            
+            if (validPosts.length === 0) return {};
+            
+            // 按热度排序
+            const sortedByHotness = [...validPosts].sort((a, b) => parseFloat(b.hotness) - parseFloat(a.hotness));
+            
+            // 计算每个帖子的百分位
+            const percentiles = {};
+            sortedByHotness.forEach((post, index) => {
+                percentiles[post.id] = (index + 1) / sortedByHotness.length;
+            });
+            
+            return percentiles;
+        }
+
+        // 格式化时间显示（基于文档日期，仅在同一天时显示时间）
+        function formatTimeDisplay(timestamp, docDate) {
+            const dateStr = timestamp.substring(0, 10);
+            
+            // 只在同一天时显示时间
+            if (dateStr === docDate) {
+                return timestamp.substring(11, 16); // HH:mm
+            }
+            return '';
+        }
+
+        // 格式化详细日期显示（用于帖子和评论中的日期）
+        function formatDetailedDateTime(timestamp, docDate) {
+            const time = timestamp.substring(11, 16); // HH:mm
+            const dateStr = timestamp.substring(0, 10); // YYYY-MM-DD
+            
+            // 如果是同一天，不显示日期
+            if (dateStr === docDate) {
+                return '';
+            }
+            
+            // 计算是否为第二天
+            const postDate = new Date(dateStr + 'T00:00:00');
+            const docDateObj = new Date(docDate + 'T00:00:00');
+            const diffTime = postDate - docDateObj;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            // 如果是第二天，显示"第二天 HH:mm"
+            if (diffDays === 1) {
+                return `第二天 ${time}`;
+            }
+            
+            // 其他日期，显示完整日期和时间
+            return `${dateStr} ${time}`;
+        }
+
+        // 表情映射表
+        const emojiMap = {
+            '不': '❌',
+            '劳资': '😠',
+            '囧-窘迫': '😩',
+            '伤不起': '😢',
+            '亲亲': '😘',
+            '伤心': '😢',
+            '傲娇': '😏',
+            '冷汗': '😰',
+            '加油': '💪',
+            '发呆': '😐',
+            '可怜': '🥺',
+            '可爱': '🥰',
+            '同意': '👍',
+            '吐': '🤮',
+            '吐血': '😵',
+            '吻': '💋',
+            '呕吐': '🤢',
+            '呲牙': '😁',
+            '呵呵': '😌',
+            '咒骂': '😤',
+            '哈哈': '😄',
+            '哦': '😲',
+            '哭': '😭',
+            '哭哭': '😭',
+            '哭唧唧': '😭',
+            '哭泣': '😭',
+            '唉': '😔',
+            '啊啊啊': '😱',
+            '喵': '😸',
+            '喷血': '😵',
+            '嘴唇': '😘',
+            '嘻嘻': '😄',
+            '嘿哈': '😄',
+            '噘嘴': '😒',
+            '回头': '🔄',
+            '囧': '😩',
+            '困': '😴',
+            '坏笑': '😏',
+            '大哭': '😭',
+            '大拇指': '👍',
+            '大笑': '😆',
+            '太开心': '😄',
+            '太难了': '😩',
+            '太高兴': '😄',
+            '失望': '😞',
+            '头秃': '🏳',
+            '奋斗': '💪',
+            '奖励': '🎁',
+            '奸笑': '😏',
+            '好囧': '😩',
+            '好的': '👍',
+            '妇女': '👩',
+            '委屈': '😔',
+            '委屈脸': '😭',
+            '嫌弃': '😒',
+            '害羞': '😳',
+            '尴尬': '😳',
+            '尴尬脸': '😳',
+            '左哼哼': '😒',
+            '开心': '😄',
+            '弱': '😞',
+            '强': '💪',
+            '征友': '❤️',
+            '得意': '😏',
+            '微笑': '🙂',
+            '微笑脸': '🙂',
+            '心': '❤️',
+            '心碎': '💔',
+            '忧伤': '😞',
+            '快哭了': '😭',
+            '怄火': '😤',
+            '思考': '🤔',
+            '恳求': '🙏',
+            '悠闲': '😎',
+            '悲伤': '😞',
+            '惊吓': '😲',
+            '惊恐': '😨',
+            '惊讶': '😮',
+            '愉快': '😊',
+            '愉悦': '😊',
+            '感动': '😭',
+            '憨笑': '😄',
+            '懵逼脸': '😕',
+            '手残': '🙈',
+            '打脸': '👋',
+            '打豆豆': '👊',
+            '扔肥皂': '🧼',
+            '托腮': '🤔',
+            '扣鼻': '🙉',
+            '扶额': '😔',
+            '抓狂': '😫',
+            '抛媚眼': '😉',
+            '抠鼻': '🙉',
+            '抱拳': '🙏',
+            '拜拜': '👋',
+            '拥抱': '🤗',
+            '拳头': '👊',
+            '挖鼻屎': '🙉',
+            '挠头': '🤔',
+            '捂眼': '🙈',
+            '捂脸': '🤦',
+            '捂脸跑': '🏃',
+            '捂脸逃': '🏃',
+            '握手': '🤝',
+            '摊手': '🤷',
+            '摔': '📉',
+            '摸摸头': '🙏',
+            '撇嘴': '😒',
+            '斜眼': '😉',
+            '斜眼笑': '😏',
+            '无奈': '😒',
+            '无奈脸': '😒',
+            '无聊': '😐',
+            '星星眼': '⭐',
+            '晕': '😵',
+            '比心': '💕',
+            '比如我': '🙋',
+            '爆哭': '😭',
+            '爱': '💕',
+            '爱你': '💕',
+            '爱心': '❤️',
+            '狂汗': '😅',
+            '狗头': '🐕',
+            '玫瑰': '🌹',
+            '玫瑰花': '🌹',
+            '生气': '😠',
+            '生病': '🤒',
+            '疑问': '❓',
+            '疯了': '🤪',
+            '發呆': '😐',
+            '白眼': '🙄',
+            '皱眉': '😠',
+            '皺眉': '😠',
+            '盯': '👀',
+            '看': '👀',
+            '睡': '😴',
+            '石化': '😐',
+            '笑': '😄',
+            '笑哭': '😂',
+            '笑抽': '😂',
+            '笑死': '😂',
+            '笑脸': '😊',
+            '糗大了': '😩',
+            '红包': '🧧',
+            '美': '😍',
+            '羞': '😳',
+            '羞涩': '😳',
+            '耶': '🎉',
+            '胜利': '✌️',
+            '脸红': '😊',
+            '膜拜': '🙏',
+            '致郁系': '😞',
+            '舔': '😋',
+            '色迷迷': '😍',
+            '花痴脸': '😍',
+            '苦脸': '😞',
+            '菜刀': '🔪',
+            '蓝天': '🌤️',
+            '蜡烛': '🕯️',
+            '蠢哭': '😭',
+            '衰': '😞',
+            '认真': '😠',
+            '认领': '🏷️',
+            '诚恳': '🙏',
+            '调皮': '😜',
+            '谄笑': '😏',
+            '赞': '👏',
+            '走你': '🚶',
+            '超凶': '😤',
+            '超小声': '🤐',
+            '跪了': '🙇',
+            '跳跳': '🤸',
+            '转圈': '🔄',
+            '转让': '🏷️',
+            '辣眼睛': '👀',
+            '连座': '🪑',
+            '迷惑': '😕',
+            '送': '🎁',
+            '酷': '😎',
+            '酸': '😒',
+            '问': '❓',
+            '问号脸': '😕',
+            '防流感': '😷',
+            '阴险': '😏',
+            '降温': '🧊',
+            '难受': '😞',
+            '难过': '😭',
+            '鞠躬': '🙇',
+            '风扇': '🌪️',
+            '风筝': '🪁',
+            '馋嘴': '😋',
+            '鲜花': '🌹',
+            '鸭梨': '🍐',
+            '黄牌': '🟨',
+            '黑脸': '😤',
+            '默哀': '🙏',
+            '鼓掌': '👏',
+            '龇牙': '😁'
+        };
+
+        // 处理文本内容（表情、@等）
+        function processTextContent(text) {
+            if (!text) return '';
+            
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>')
+                .replace(/回复([^:：]+)[:\uff1a]\s*/g, '回复<span class="mention">@$1</span> : ')
+                .replace(/Re ([^:：]+)[:\uff1a]\s*/g, '回复<span class="mention">@$1</span> : ')
+                .replace(/\[([^\]]+)\]/g, function(match, content) {
+                    const emoji = emojiMap[content];
+                    if (emoji) {
+                        return `<span class="emoji" title="${content}">${emoji}</span>`;
+                    }
+                    // 如果没有映射，保持原样
+                    return `<span class="emoji">[${content}]</span>`;
+                })
+                .replace(/@([^\s]+)/g, '<span class="mention">@$1</span>');
+        }
+
+        // 根据日期加载文件
+        async function loadFileByDate(dateStr) {
+            if (!dateStr) return;
+            
+            // 隐藏空状态
+            emptyState.style.display = 'none';
+            splitLayout.style.display = 'flex';
+            
+            // 显示加载状态
+            showLoading();
+            
+            try {
+                let data = null;
+                let fromCache = false;
+                
+                // 尝试从缓存获取
+                const cachedData = getFromCache(dateStr);
+                if (cachedData) {
+                    data = cachedData;
+                    fromCache = true;
+                    console.log(`从缓存加载数据: ${dateStr}`);
+                } else {
+                    // 从网络加载
+                    let filePath;
+                    if (isOnlineMode) {
+                        // 在线模式：GitHub raw content URL
+                        const year = dateStr.substring(0, 4);
+                        const month = dateStr.substring(4, 6);
+                        filePath = `https://raw.githubusercontent.com/woct0rdho/pkuholebackup/master/archive/${year}${month}/pkuhole${dateStr}.txt`;
+                    } else {
+                        // 本地模式：相对路径
+                        const year = dateStr.substring(0, 4);
+                        const month = dateStr.substring(4, 6);
+                        filePath = `archive/${year}${month}/pkuhole${dateStr}.txt`;
+                    }
+                    
+                    const response = await fetch(filePath);
+                    if (!response.ok) {
+                        throw new Error(`无法加载文件: ${response.status}`);
+                    }
+                    
+                    const content = await response.text();
+                    data = parseHoleFile(content);
+                    
+                    // 保存到缓存
+                    saveToCache(dateStr, data);
+                    console.log(`从网络加载并缓存数据: ${dateStr}`);
+                }
+                
+                currentData = data;
+                
+                // 渲染内容
+                renderHoleContent(currentData);
+                
+                // 更新文件信息
+                updateFileInfo(currentData, dateStr, fromCache);
+                
+                // 更新日期栏
+                updateDateBar(dateStr, data.stats.totalPosts, data.stats.totalComments);
+                
+                // 保存当前日期
+                currentDate = dateStr;
+                
+                // 添加历史记录
+                addHistoryItem('date_view', {
+                    date: dateStr,
+                    postCount: data.stats.totalPosts,
+                    commentCount: data.stats.totalComments
+                });
+                
+            } catch (error) {
+                console.error('加载文件时出错:', error);
+                const modeText = isOnlineMode ? '在线' : '本地';
+                postsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="empty-title">加载失败</div>
+                        <div class="empty-text">
+                            无法加载该日期的树洞档案：${error.message}
+                        </div>
+                        <div class="empty-text" style="font-size: 12px; margin-top: 12px;">
+                            提示：如果使用本地模式，请确保已下载相应的数据文件
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 计算前一天或后一天
+        function getAdjacentDate(offset) {
+            if (!currentDate) return null;
+            const year = parseInt(currentDate.substring(0, 4));
+            const month = parseInt(currentDate.substring(4, 6)) - 1; // JS month 0-based
+            const day = parseInt(currentDate.substring(6, 8));
+            const date = new Date(year, month, day);
+            date.setDate(date.getDate() + offset);
+            const newYear = date.getFullYear();
+            const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+            const newDay = String(date.getDate()).padStart(2, '0');
+            return `${newYear}${newMonth}${newDay}`;
+        }
+
+        // 渲染树洞内容
+        function renderHoleContent(data) {
+            if (data.posts.length === 0) {
+                postsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <div class="empty-title">没有找到树洞内容</div>
+                        <div class="empty-text">
+                            该文件不包含有效的树洞数据，请选择其他文件
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 计算热度百分位
+            const hotnessPercentiles = calculateHotnessPercentiles(data.posts);
+            
+            let html = '';
+            
+            data.posts.forEach(post => {
+                // 根据开关决定是否显示
+                if ((post.isMissed && !showMissedPosts) || (post.isDeleted && !showDeletedPosts)) {
+                    return; // 跳过不显示的帖子
+                }
+                
+                // 格式化时间
+                const timeDisplay = formatTimeDisplay(post.time, data.date);
+                const dateStr = post.time.substring(0, 10);
+                const displayDateTime = formatDetailedDateTime(post.time, data.date);
+                
+                // 处理帖子内容
+                const processedContent = processTextContent(post.content);
+                
+                // 确定卡片类名
+                const cardClass = post.isMissed ? 'hole-card missed-post' : 
+                                 post.isDeleted ? 'hole-card deleted-post' : 'hole-card';
+                const hiddenClass = (post.isMissed && !showMissedPosts) || (post.isDeleted && !showDeletedPosts) ? 'hidden' : '';
+                const clickableClass = (currentLayout === 'split' && !isMobile) ? 'clickable' : '';
+                const activeClass = (activePostId === post.id && currentLayout === 'split' && !isMobile) ? 'active' : '';
+                
+                // 获取热度颜色
+                const hotnessPercentile = hotnessPercentiles[post.id] || 0;
+                const hotnessColorClass = getHotnessColorClass(parseFloat(post.hotness), hotnessPercentile);
+                
+                html += `
+                    <div class="${cardClass} ${hiddenClass} ${clickableClass} ${activeClass}" data-id="${post.id}" data-hotness="${post.hotness}">
+                        <div class="card-header">
+                            <div class="user-info">
+                                <div class="post-time">
+                                    <span class="post-id">#${post.id}</span>
+                `;
+                
+                // 添加删除标记
+                if (post.isDeleted) {
+                    html += `<span class="deleted-badge"><i class="fas fa-trash"></i> 被删除</span>`;
+                }
+                
+                // 显示帖子内容
+                if (post.isMissed) {
+                    html += `<span class="post-content-inline" style="color: var(--text-tertiary); font-style: italic;">该帖子在数据库中缺失</span>`;
+                } else {
+                    // 在卡片中只显示简化的内容（第一行或前100字符）
+                    const previewContent = post.content.split('\n')[0].substring(0, 100);
+                    const processedPreview = processTextContent(previewContent + (post.content.length > 100 ? '...' : ''));
+                    html += `<span class="post-content-inline">${processedPreview}</span>`;
+                }
+                
+                // 显示统计信息和热度标签
+                if (!post.isMissed) {
+                    const votesDisplay = [];
+                    if (post.watches !== 0) votesDisplay.push(`⭐ ${post.watches}`);
+                    if (post.comments.length !== 0) votesDisplay.push(`💬 ${post.comments.length}`);
+                    
+                    // 热度标签
+                    if (post.hotness > 0) {
+                        html += `<span class="hotness-tag ${hotnessColorClass}"><i class="fas fa-fire"></i> ${post.hotness}</span>`;
+                    }
+                    
+                    // 推荐标签（相似度高的帖子）
+                    if (post.similarity > 0.3) {
+                        html += `<span class="recommend-tag"><i class="fas fa-star"></i> 推荐</span>`;
+                    }
+                    
+                    if (votesDisplay.length > 0) {
+                        html += `<span class="post-votes">${votesDisplay.join(' ')}</span>`;
+                    }
+                }
+                
+                html += `
+                                    <span class="post-time-info">${timeDisplay}${displayDateTime ? (timeDisplay ? ' · ' : '') + displayDateTime : ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                `;
+                
+                // 传统布局：显示完整内容和评论
+                if (currentLayout === 'traditional' && !post.isMissed) {
+                    html += `
+                        <div class="card-content">${processedContent}</div>
+                    `;
+                    
+                    if (post.comments.length > 0) {
+                        html += `
+                            <div class="comments-section">
+                                <div class="comments-title">
+                                    <span>评论</span>
+                                    <span class="comment-count">${post.comments.length}</span>
+                                </div>
+                                <div class="comment-list">
+                        `;
+                        
+                        post.comments.forEach(comment => {
+                            const commentTimeDisplay = formatTimeDisplay(comment.time, data.date);
+                            const displayCommentDateTime = formatDetailedDateTime(comment.time, data.date);
+                            const processedComment = processTextContent(comment.content);
+                            
+                            html += `
+                                <div class="comment-item">
+                                    <div class="comment-content">
+                                        <div class="comment-header">
+                                            <div class="comment-username">${comment.user}</div>
+                                            <div class="comment-text">${processedComment}</div>
+                                            <div class="comment-meta">
+                                                <span class="comment-time">${commentTimeDisplay}${displayCommentDateTime ? (commentTimeDisplay ? ' · ' : '') + displayCommentDateTime : ''}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += `</div>`;
+            });
+            
+            postsContainer.innerHTML = html + '<div class="posts-scroll-area" id="postsScrollArea"></div>';
+            
+            // 更新布局样式
+            updateLayoutStyle();
+            
+            // 绑定交互事件
+            bindInteractionEvents();
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            postsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">正在解析树洞档案...</div>
+                </div>
+            `;
+        }
+
+        // 更新文件信息
+        function updateFileInfo(data, dateStr, fromCache = false) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const displayDate = `${year}-${month}-${day}`;
+            fileName.textContent = displayDate;
+            postCount.textContent = `树洞: ${data.stats.totalPosts}`;
+            commentCount.textContent = `评论: ${data.stats.totalComments}`;
+            
+            // 显示缓存指示器
+            if (fromCache) {
+                cacheIndicator.innerHTML = '<span class="cache-indicator"><i class="fas fa-database"></i> 缓存</span>';
+            } else {
+                cacheIndicator.innerHTML = '';
+            }
+            
+            fileInfo.style.display = 'flex';
+        }
+
+        // 更新布局样式
+        function updateLayoutStyle() {
+            if (currentLayout === 'traditional' || isMobile) {
+                postsContainer.classList.add('full-width');
+                if (rightPanel) {
+                    rightPanel.classList.remove('empty');
+                }
+                activePostId = null;
+            } else {
+                postsContainer.classList.remove('full-width');
+                if (rightPanel && !activePostId) {
+                    rightPanel.classList.add('empty');
+                }
+            }
+        }
+
+        // 显示右侧面板（分屏布局）
+        function showRightPanel(postId, scrollToTop = true) {
+            if (!postId || isMobile) return;
+            
+            // 查找帖子
+            const post = currentData.posts.find(p => p.id === postId);
+            if (!post || post.isMissed) return;
+            
+            // 更新用户偏好向量
+            updateUserPreference(post.content);
+            
+            // 更新激活状态
+            activePostId = postId;
+            document.querySelectorAll('.hole-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            const activeCard = document.querySelector(`.hole-card[data-id="${postId}"]`);
+            if (activeCard) {
+                activeCard.classList.add('active');
+                
+                // 点击模式下，滚动到帖子位置
+                if (scrollToTop && currentInteraction === 'click') {
+                    // 计算帖子在列表中的位置，使其接近顶部但保留一点上下文
+                    const containerTop = postsContainer.getBoundingClientRect().top;
+                    const cardTop = activeCard.getBoundingClientRect().top;
+                    const scrollAmount = cardTop - containerTop - 20; // 20px 的偏移
+                    
+                    postsContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                }
+            }
+            
+            // 渲染右侧面板内容
+            let html = '';
+            
+            // 帖子详情
+            const timeDisplay = formatTimeDisplay(post.time, currentData.date);
+            const displayDateTime = formatDetailedDateTime(post.time, currentData.date);
+            const processedContent = processTextContent(post.content);
+            
+            html += `
+                <div class="post-detail-card">
+                    <div class="post-detail-content">${processedContent}</div>
+                    <div class="post-detail-meta">
+                        <span class="post-detail-id">#${post.id}</span>
+                        <span>${timeDisplay}${displayDateTime ? (timeDisplay ? ' · ' : '') + displayDateTime : ''}</span>
+                        <span class="post-detail-hotness"><i class="fas fa-fire"></i> ${post.hotness}</span>
+                    </div>
+                </div>
+            `;
+            
+            // 评论部分
+            if (post.comments.length > 0) {
+                html += `
+                    <div style="padding: 20px;">
+                        <div class="comments-title">
+                            <span>评论 (${post.comments.length})</span>
+                        </div>
+                        <div class="comment-list">
+                `;
+                
+                post.comments.forEach(comment => {
+                    const commentTimeDisplay = formatTimeDisplay(comment.time, currentData.date);
+                    const displayCommentDateTime = formatDetailedDateTime(comment.time, currentData.date);
+                    const processedComment = processTextContent(comment.content);
+                    
+                    html += `
+                        <div class="comment-item">
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <div class="comment-username">${comment.user}</div>
+                                    <div class="comment-text">${processedComment}</div>
+                                    <div class="comment-meta">
+                                        <span class="comment-time">${commentTimeDisplay}${displayCommentDateTime ? (commentTimeDisplay ? ' · ' : '') + displayCommentDateTime : ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `<div style="text-align: center; padding: 40px; color: var(--text-tertiary);">暂无评论</div>`;
+            }
+            
+            rightPanelContent.innerHTML = html;
+            rightPanel.classList.remove('empty');
+            
+            // 滚动右侧面板到顶部
+            if (scrollToTop) {
+                rightPanelContent.scrollTop = 0;
+            }
+            
+            // 添加历史记录
+            const previewContent = post.content.split('\n')[0].substring(0, 50);
+            addHistoryItem('post_view', {
+                date: currentDate,
+                postId: post.id,
+                preview: previewContent + (post.content.length > 50 ? '...' : '')
+            });
+        }
+
+        // 关闭右侧面板
+        function closeRightPanel() {
+            activePostId = null;
+            if (rightPanel) {
+                rightPanel.classList.add('empty');
+            }
+            document.querySelectorAll('.hole-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // 显示空状态
+            if (rightPanelContent) {
+                rightPanelContent.innerHTML = `
+                    <div class="empty-panel">
+                        <div class="empty-panel-icon">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="empty-panel-title">选择左侧的帖子查看详情</div>
+                        <div class="empty-panel-text">点击或悬停左侧的帖子卡片，这里将显示完整的帖子内容和所有评论</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 绑定交互事件
+        function bindInteractionEvents() {
+            const cards = document.querySelectorAll('.hole-card.clickable:not(.missed-post)');
+            
+            cards.forEach(card => {
+                // 移除之前的事件监听器
+                card.removeEventListener('click', handleCardClick);
+                card.removeEventListener('mouseenter', handleCardHover);
+                card.removeEventListener('mouseleave', handleCardLeave);
+                
+                // 根据交互模式绑定事件
+                if (currentLayout === 'split' && !isMobile) {
+                    if (currentInteraction === 'click') {
+                        card.addEventListener('click', handleCardClick);
+                    } else if (currentInteraction === 'hover') {
+                        card.addEventListener('mouseenter', handleCardHover);
+                        card.addEventListener('mouseleave', handleCardLeave);
+                    }
+                }
+            });
+        }
+
+        function handleCardClick(e) {
+            if (currentLayout !== 'split' || isMobile) return;
+            const postId = parseInt(e.currentTarget.dataset.id);
+            if (activePostId === postId) {
+                closeRightPanel();
+            } else {
+                showRightPanel(postId, true);
+            }
+        }
+
+        function handleCardHover(e) {
+            if (currentLayout !== 'split' || currentInteraction !== 'hover' || isMobile) return;
+            const postId = parseInt(e.currentTarget.dataset.id);
+            if (activePostId !== postId) {
+                showRightPanel(postId, false);
+            }
+        }
+
+        function handleCardLeave(e) {
+            if (currentLayout !== 'split' || currentInteraction !== 'hover' || isMobile) return;
+            // 延迟关闭，避免快速切换时闪烁
+            setTimeout(() => {
+                if (!e.currentTarget.matches(':hover')) {
+                    closeRightPanel();
+                }
+            }, 100);
+        }
+
+        // 重新排序并渲染内容
+        function reSortAndRender() {
+            if (currentData.posts.length > 0) {
+                // 应用推荐算法重新排序
+                currentData.posts = applyRecommendationAlgorithm(currentData.posts, currentSortMethod);
+                renderHoleContent(currentData);
+                
+                // 重新设置已删除帖子的显示状态
+                updatePostVisibility();
+            }
+        }
+
+        // 更新帖子可见性
+        function updatePostVisibility() {
+            const missedCards = document.querySelectorAll('.hole-card.missed-post');
+            const deletedCards = document.querySelectorAll('.hole-card.deleted-post');
+            
+            missedCards.forEach(card => {
+                if (!showMissedPosts) {
+                    card.classList.add('hidden');
+                } else {
+                    card.classList.remove('hidden');
+                }
+            });
+            
+            deletedCards.forEach(card => {
+                if (!showDeletedPosts) {
+                    card.classList.add('hidden');
+                } else {
+                    card.classList.remove('hidden');
+                }
+            });
+        }
+
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 切换显示数据库中缺失的帖子
+            toggleMissedBtn.addEventListener('click', () => {
+                showMissedPosts = !showMissedPosts;
+                toggleMissedBtn.classList.toggle('active');
+                updatePostVisibility();
+            });
+            
+            // 切换显示被删除的帖子
+            toggleDeletedBtn.addEventListener('click', () => {
+                showDeletedPosts = !showDeletedPosts;
+                toggleDeletedBtn.classList.toggle('active');
+                updatePostVisibility();
+            });
+            
+            // 排序选择器事件监听
+            sortSelect.addEventListener('change', () => {
+                currentSortMethod = sortSelect.value;
+                reSortAndRender();
+            });
+            
+            // 布局选择器事件监听
+            layoutSelect.addEventListener('change', () => {
+                currentLayout = layoutSelect.value;
+                
+                // 显示/隐藏分屏交互选项
+                if (currentLayout === 'split' && !isMobile) {
+                    splitInteractionGroup.style.display = 'flex';
+                    splitLayout.style.display = 'flex';
+                } else {
+                    splitInteractionGroup.style.display = 'none';
+                    splitLayout.style.display = 'flex';
+                    closeRightPanel();
+                }
+                
+                // 重新渲染
+                if (currentData.posts.length > 0) {
+                    renderHoleContent(currentData);
+                }
+            });
+            
+            // 交互模式选择器事件监听
+            interactionSelect.addEventListener('change', () => {
+                currentInteraction = interactionSelect.value;
+                
+                // 重新绑定交互事件
+                if (currentData.posts.length > 0) {
+                    bindInteractionEvents();
+                }
+            });
+            
+            // 关闭右侧面板按钮
+            closeRightPanelBtn.addEventListener('click', closeRightPanel);
+            
+            // 回到顶部按钮事件
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // 滚动时显示/隐藏回到顶部按钮
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopBtn.classList.add('visible');
+                } else {
+                    backToTopBtn.classList.remove('visible');
+                }
+            });
+            
+            // 空状态区域点击事件
+            uploadArea.addEventListener('click', () => {
+                // 高亮上传区域和按钮
+                uploadArea.classList.add('highlight');
+                loadBtn.classList.add('highlight');
+                dateInput.style.borderColor = 'var(--primary-color)';
+                
+                // 2秒后移除高亮
+                setTimeout(() => {
+                    uploadArea.classList.remove('highlight');
+                    loadBtn.classList.remove('highlight');
+                    dateInput.style.borderColor = 'var(--border-color)';
+                }, 2000);
+            });
+            
+            // 关于按钮事件
+            aboutBtn.addEventListener('click', () => {
+                openModal(aboutModal);
+            });
+            
+            closeAboutBtn.addEventListener('click', () => {
+                closeModal(aboutModal);
+            });
+            
+            // 历史按钮事件
+            historyBtn.addEventListener('click', () => {
+                openModal(historyModal);
+            });
+            
+            closeHistoryBtn.addEventListener('click', () => {
+                closeModal(historyModal);
+            });
+            
+            // 清除历史按钮事件
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            
+            // 清除缓存按钮事件
+            clearCacheBtn.addEventListener('click', clearAllCache);
+            
+            // 日期栏隐藏按钮事件
+            hideDateBarBtn.addEventListener('click', toggleDateBar);
+            
+            // 点击模态框背景关闭
+            window.addEventListener('click', (e) => {
+                if (e.target === aboutModal) {
+                    closeModal(aboutModal);
+                }
+                if (e.target === historyModal) {
+                    closeModal(historyModal);
+                }
+            });
+            
+            // 模式切换按钮
+            modeToggle.addEventListener('click', async () => {
+                isOnlineMode = !isOnlineMode;
+                if (isOnlineMode) {
+                    modeText.textContent = '🌐 在线模式';
+                } else {
+                    // 切换到本地模式时，重新检测一下
+                    const hasLocalFiles = await detectLocalFiles();
+                    if (hasLocalFiles) {
+                        modeText.textContent = '✓ 📁 本地模式';
+                    } else {
+                        modeText.textContent = '⚠ 📁 本地模式';
+                    }
+                }
+            });
+
+            // 加载按钮
+            loadBtn.addEventListener('click', () => {
+                const dateStr = dateInput.value.replace(/-/g, '');
+                if (!dateInput.value) {
+                    alert('请选择日期（2013-12-15 至 2019-11-24）');
+                    return;
+                }
+                if (dateStr) {
+                    loadFileByDate(dateStr);
+                }
+            });
+
+            // 日期输入回车
+            dateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const dateStr = dateInput.value.replace(/-/g, '');
+                    if (dateStr) {
+                        loadFileByDate(dateStr);
+                    }
+                }
+            });
+
+            // 导航按钮事件
+            prevDayBtn.addEventListener('click', () => {
+                if (!currentDate) {
+                    alert('请先加载一个日期的数据');
+                    return;
+                }
+                const prevDate = getAdjacentDate(-1);
+                if (prevDate) {
+                    dateInput.value = `${prevDate.substring(0, 4)}-${prevDate.substring(4, 6)}-${prevDate.substring(6, 8)}`;
+                    loadFileByDate(prevDate);
+                } else {
+                    alert('已到达最早日期（2013-12-15）');
+                }
+            });
+            
+            nextDayBtn.addEventListener('click', () => {
+                if (!currentDate) {
+                    alert('请先加载一个日期的数据');
+                    return;
+                }
+                const nextDate = getAdjacentDate(1);
+                if (nextDate) {
+                    dateInput.value = `${nextDate.substring(0, 4)}-${nextDate.substring(4, 6)}-${nextDate.substring(6, 8)}`;
+                    loadFileByDate(nextDate);
+                } else {
+                    alert('已到达最晚日期（2019-11-24）');
+                }
+            });
+        }
+
+        // 检测本地文件是否存在
+        async function detectLocalFiles() {
+            try {
+                // 尝试加载第一个文件来检测本地文件是否存在
+                const response = await fetch('archive/201312/pkuhole20131215.txt', { method: 'HEAD' });
+                return response.ok;
+            } catch (error) {
+                // 如果出错，尝试用 GET 请求
+                try {
+                    const response = await fetch('archive/201312/pkuhole20131215.txt');
+                    return response.ok;
+                } catch (e) {
+                    return false;
+                }
+            }
+        }
+
+        // 初始化：检测本地文件并自动设置模式
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 检测设备类型
+            detectDevice();
+            
+            // 监听窗口大小变化
+            window.addEventListener('resize', detectDevice);
+            
+            // 设置日期范围：2013-12-15 到 2019-11-24
+            dateInput.min = '2013-12-15';
+            dateInput.max = '2019-11-24';
+            
+            // 设置默认值为最后一天
+            dateInput.value = '2019-11-24';
+            
+            // 检测本地文件
+            const hasLocalFiles = await detectLocalFiles();
+            
+            if (hasLocalFiles) {
+                // 有本地文件，使用本地模式
+                isOnlineMode = false;
+                modeText.textContent = '✓ 📁 本地模式';
+            } else {
+                // 没有本地文件，使用在线模式
+                isOnlineMode = true;
+                modeText.textContent = '🌐 在线模式';
+            }
+            
+            // 设置默认排序方式
+            sortSelect.value = currentSortMethod;
+            layoutSelect.value = currentLayout;
+            interactionSelect.value = currentInteraction;
+            
+            // 移动端调整
+            if (isMobile) {
+                splitInteractionGroup.style.display = 'none';
+                currentLayout = 'traditional';
+                layoutSelect.value = 'traditional';
+                
+                // 隐藏分屏选项
+                const splitOption = document.querySelector('#layoutSelect option[value="split"]');
+                if (splitOption) splitOption.style.display = 'none';
+            }
+            
+            // 初始化开关状态
+            toggleMissedBtn.classList.toggle('active', showMissedPosts);
+            toggleDeletedBtn.classList.toggle('active', showDeletedPosts);
+            
+            // 初始化缓存和统计
+            initCacheAndStats();
+            
+            // 初始化事件监听器
+            initEventListeners();
+            
+            // 添加键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                // 忽略在输入框中的按键
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                // 快捷键处理
+                switch(e.key.toLowerCase()) {
+                    case 'l':
+                        // 切换布局（桌面端）
+                        if (!isMobile) {
+                            e.preventDefault();
+                            layoutSelect.value = layoutSelect.value === 'traditional' ? 'split' : 'traditional';
+                            layoutSelect.dispatchEvent(new Event('change'));
+                        }
+                        break;
+                    case ' ':
+                        // 空格键：展开/关闭评论
+                        e.preventDefault();
+                        if (currentLayout === 'split' && activePostId && !isMobile) {
+                            closeRightPanel();
+                        }
+                        break;
+                    case 'arrowup':
+                    case 'k':
+                        // 上一个帖子
+                        e.preventDefault();
+                        navigatePosts(-1);
+                        break;
+                    case 'arrowdown':
+                    case 'j':
+                        // 下一个帖子
+                        e.preventDefault();
+                        navigatePosts(1);
+                        break;
+                    case 'home':
+                        // 回到顶部
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        break;
+                    case 'end':
+                        // 到底部
+                        e.preventDefault();
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                        break;
+                }
+            });
+        });
+        
+        // 导航帖子（快捷键用）
+        function navigatePosts(direction) {
+            if (currentData.posts.length === 0) return;
+            
+            const cards = Array.from(document.querySelectorAll('.hole-card.clickable:not(.hidden)'));
+            if (cards.length === 0) return;
+            
+            let currentIndex = -1;
+            if (activePostId) {
+                currentIndex = cards.findIndex(card => parseInt(card.dataset.id) === activePostId);
+            }
+            
+            let newIndex = currentIndex + direction;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= cards.length) newIndex = cards.length - 1;
+            
+            if (newIndex >= 0 && newIndex < cards.length) {
+                const postId = parseInt(cards[newIndex].dataset.id);
+                if (currentLayout === 'split' && !isMobile) {
+                    showRightPanel(postId, true);
+                }
+            }
+        }
+        
+    </script>
+</body>
+</html>
